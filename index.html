@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Offline Mode No Error</title>
+    <title>Flexi Dashboard 2026 - Fixed Load</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
@@ -40,7 +40,7 @@
 
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Menuat Batas Wilayah Kabupaten/Kota...</div>
+        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Batas Wilayah Kabupaten/Kota...</div>
     </div>
 
     <div class="navbar">
@@ -159,14 +159,17 @@
             try {
                 document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
                 
-                // GeoJSON dari internet aman tanpa block CORS
-                const geoRes = await fetch('const geoRes = await fetch('https://raw.githubusercontent.com/anshori/indonesia-geojson/master/indonesia-kab.json');
+                // FIXED: Link URL geojson sudah bersih dari typo double fetch
+                const geoRes = await fetch('https://raw.githubusercontent.com/anshori/indonesia-geojson/master/indonesia-kab.json');
                 geojsonData = await geoRes.json();
                 
                 document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
                 
-                // Membaca isi variabel rawMappingData yang otomatis tersedia dari file mapping_state.js
-                const parsedValidation = Papa.parse(rawMappingData, { header: true, skipEmptyLines: true }).data;
+                // Cek apakah data menggunakan Base64 (BE) atau Backtick String biasa
+                let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
+                let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
+
+                const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
                 parsedValidation.forEach(row => {
                     if(row.state_code && row.nama_provinsi) {
                         stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
@@ -175,13 +178,12 @@
 
                 document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
                 
-                // Membaca isi variabel rawPencairanData yang otomatis tersedia dari file data_pencairan_2026.js
-                rawSales = Papa.parse(rawPencairanData, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
+                rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 
                 processData();
             } catch (e) { 
                 console.error(e);
-                document.getElementById('loading-overlay').innerText = "Terjadi kesalahan internal data. Periksa penulisan variabel javascript.";
+                document.getElementById('loading-overlay').innerText = "Terjadi kesalahan internal data atau file pendukung (.js) belum siap.";
             }
         }
 
