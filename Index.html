@@ -104,17 +104,26 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([-2.5489, 118.0149], 5);
+        // 1. Tentukan batas wilayah koordinat Indonesia (Barat Daya ke Timur Laut)
+        var indonesiaBounds = L.latLngBounds(
+            L.latLng(-11.0, 94.0),  // Sabang / ujung kiri bawah
+            L.latLng(6.0, 141.0)    // Merauke / ujung kanan atas
+        );
+
+        // 2. Inisialisasi Peta dengan batasan wilayah & zoom minimal
+        var map = L.map('map', {
+            center: [-2.5489, 118.0149],
+            zoom: 5,
+            minZoom: 5,                     // Supaya tidak bisa di-zoom out lebih kecil dari Indonesia
+            maxBounds: indonesiaBounds,     // Kunci pergeseran peta di area ini saja
+            maxBoundsViscosity: 1.0         // Efek 'mental' balik jika user mencoba menggeser keluar batas
+        });
         
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri'
+        // 3. Kembali ke tema minimalis (CartoDB Positron Light)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CartoDB'
         }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-            pane: 'shadowPane'
-        }).addTo(map);
-
-        // Paksa peta mengatur ulang ukuran agar tidak bug/pecah kotak-kotak
         setTimeout(function(){ map.invalidateSize(); }, 500);
     </script>
 </body>
