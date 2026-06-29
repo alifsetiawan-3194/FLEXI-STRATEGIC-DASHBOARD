@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Performance</title>
+    <title>Flexi Dashboard 2026 - Performance Premium</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
@@ -11,65 +11,46 @@
         .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; color: #555; border: 1px solid #ddd; }
         .nav-btn.active { background: #00529c; color: white; border-color: #00529c; }
         #map { height: 100vh; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        
         .sidebar { position: absolute; top: 80px; right: 20px; width: 360px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 85vh; overflow-y: auto; }
         .filter-container { display: flex; gap: 8px; margin-bottom: 15px; }
         .filter-box { background: #00529c; padding: 10px; border-radius: 8px; color: white; flex: 1; }
         .filter-select { width: 100%; padding: 6px; border-radius: 5px; border: none; margin-top: 5px; font-weight: bold; color: #333; font-size: 11px; }
+        
         .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #00529c; }
         .stat-card small { color: #666; font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .stat-card div { font-weight: bold; font-size: 18px; color: #333; margin-top: 2px; }
+        
         .chart-container { margin-bottom: 15px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee; }
         .chart-label { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
+        
+        /* Floating Reset Button di Atas Peta */
+        .reset-btn { position: absolute; bottom: 30px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border: none; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; transition: 0.2s; }
+        .reset-btn:hover { background: #c0392b; }
+
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* Layout Pin Peta */
-        .custom-div-icon { 
-            background: transparent !important;
-            border: none !important;
-        }
-        .custom-pin { 
-            width: 12px; 
-            height: 12px; 
-            border-radius: 50%; 
-            background: #00529c; 
-            border: 2px solid #fff; 
-            box-shadow: 0px 0px 6px rgba(0,0,0,0.5); 
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: pointer;
-        }
-        .pin-label { 
-            background: rgba(0, 82, 156, 0.9); 
-            color: white; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-size: 10px; 
-            font-weight: bold; 
-            white-space: nowrap; 
-            position: absolute; 
-            top: -24px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
-            pointer-events: none;
-            z-index: 99999; 
-        }
+        .custom-div-icon { background: transparent !important; border: none !important; }
+        .custom-pin { width: 12px; height: 12px; border-radius: 50%; background: #00529c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; cursor: pointer; }
+        .pin-label { background: rgba(0, 82, 156, 0.9); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -24px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.3); pointer-events: none; z-index: 99999; }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Data Performance...</div>
+        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Basis Peta Wilayah...</div>
     </div>
 
     <div class="navbar">
         <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
         <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
     </div>
+
+    <button id="btn-reset" class="reset-btn" onclick="resetToNational()">🔄 KEMBALI KE NASIONAL</button>
 
     <div class="sidebar">
         <div class="filter-container">
@@ -109,6 +90,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
+        // Mapping Koordinat Pin Cabang Tetap Sama Seperti Versi Sebelumnya
         const geoMapping = {
             "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
             "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
@@ -135,7 +117,6 @@
             "4010": { name: "CB DENPASAR", lat: -8.6705, lng: 115.2126 }
         };
 
-        // Otomatis mengisi opsi Dropdown Cabang berdasarkan geoMapping
         const selectUker = document.getElementById('filter-uker');
         Object.keys(geoMapping).forEach(code => {
             let opt = document.createElement('option');
@@ -144,13 +125,19 @@
             selectUker.appendChild(opt);
         });
 
+        // Batasan Peta (Indonesia Max Bounds) Agar Tidak Tergeser Keluar Negeri
         var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
         var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0 });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
+        
+        var choroplethLayer = L.layerGroup().addTo(map); 
         var markersLayer = L.layerGroup().addTo(map);
         
         let trendChart = null;
         let rawSales = [];
+        let geojsonData = null; 
+        let stateDictionary = {}; // Objek Kamus Validasi Kota/Provinsi
+        let globalTotalSales = 0; 
 
         function formatRupiah(val) {
             if (!val) return "Rp 0";
@@ -160,8 +147,39 @@
             return "Rp " + Math.round(val).toLocaleString('id-ID');
         }
 
-        async function loadData() {
+        // Penentu Tingkat Warna Wilayah (Choropleth)
+        function getColor(v) {
+            return v > 500e9 ? '#084594' :
+                   v > 200e9 ? '#2171b5' :
+                   v > 100e9 ? '#4292c6' :
+                   v > 50e9  ? '#6baed6' :
+                   v > 10e9  ? '#9ecae1' :
+                   v > 0     ? '#c6dbef' : 'rgba(0,0,0,0.03)';
+        }
+
+        // Membaca 3 File Sekaligus: GeoJSON Publik, File Kamus Permanen, Baru CSV Utama
+        async function loadGeoJSONAndData() {
             try {
+                document.getElementById('loading-text').innerText = "Memuat Basis Peta & Kamus Wilayah...";
+                
+                const [geoRes, validationRes] = await Promise.all([
+                    fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-prov.json'),
+                    fetch('mapping_state.csv') 
+                ]);
+                
+                geojsonData = await geoRes.json();
+                const validationText = await validationRes.text();
+                
+                // Proses Memasukkan File Validasi Permanen ke Kamus Memory
+                const parsedValidation = Papa.parse(validationText, { header: true, skipEmptyLines: true }).data;
+                parsedValidation.forEach(row => {
+                    if(row.state_code && row.nama_provinsi) {
+                        stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
+                    }
+                });
+
+                document.getElementById('loading-text').innerText = "Memuat Berkas CSV Pencairan...";
+                
                 const res = await fetch('data_pencairan_2026.csv');
                 if(!res.ok) throw new Error("Gagal memuat file CSV");
                 const text = await res.text();
@@ -170,12 +188,28 @@
                 processData();
             } catch (e) { 
                 console.error(e);
-                document.getElementById('loading-overlay').innerText = "Gagal memuat file data_pencairan_2026.csv";
+                document.getElementById('loading-overlay').innerText = "Gagal memuat resource dashboard. Pastikan file mapping_state.csv dan data_pencairan_2026.csv berada di satu folder.";
             }
         }
 
         document.getElementById('filter-month').addEventListener('change', processData);
-        document.getElementById('filter-uker').addEventListener('change', processData);
+        document.getElementById('filter-uker').addEventListener('change', function() {
+            const code = this.value;
+            if(code !== 'all' && geoMapping[code]) {
+                map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1 });
+                document.getElementById('btn-reset').style.display = 'block';
+            } else if (code === 'all') {
+                resetToNational();
+            }
+            processData();
+        });
+
+        function resetToNational() {
+            document.getElementById('filter-uker').value = 'all';
+            map.setView([-2.5489, 118.0149], 5);
+            document.getElementById('btn-reset').style.display = 'none';
+            processData();
+        }
 
         function processData() {
             const m = document.getElementById('filter-month').value;
@@ -184,28 +218,23 @@
             let totalSales = 0, totalNOA = 0;
             let mTrend = Array(12).fill(0);
             let ukerStats = {};
+            let provStats = {}; 
+
+            globalTotalSales = rawSales.reduce((acc, d) => acc + parseFloat(d.approved_amount || 0), 0);
 
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "";
                 let month = parseInt(tgl.split('-')[1]);
-                
-                // 1. Filter Berdasarkan Bulan
                 if (m !== 'all' && month != m) return;
 
                 let loanId = String(d.loan_account_id || "").trim();
                 if (!loanId) return;
-
-                if (loanId.length < 15 && !loanId.startsWith("0")) {
-                    loanId = loanId.padStart(15, "0");
-                }
+                if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
 
                 let code = loanId.substring(0, 4);
-                
-                // 2. Filter Berdasarkan Cabang (Uker)
                 if (selectedUker !== 'all' && code !== selectedUker) return;
 
                 let amt = parseFloat(d.approved_amount || 0);
-
                 totalSales += amt;
                 totalNOA += 1; 
                 if(month) mTrend[month-1] += amt;
@@ -215,15 +244,48 @@
                     ukerStats[code].os += amt;
                     ukerStats[code].noa += 1;
                 }
+
+                // VALIDASI KODE WILAYAH: Kawinkan data state_code transaksi dengan file kamus permanen
+                let sCode = String(d.state_code || "").trim();
+                let pName = stateDictionary[sCode] || "LAINNYA"; 
+
+                if(pName.includes("JAKARTA")) pName = "DKI JAKARTA";
+                if(pName.includes("YOGYAKARTA")) pName = "YOGYAKARTA";
+
+                if (pName !== "LAINNYA") {
+                    provStats[pName] = (provStats[pName] || 0) + amt;
+                }
             });
 
             document.getElementById('total-os').innerText = formatRupiah(totalSales);
             document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
             document.getElementById('loading-overlay').style.display = 'none';
 
-            // Selalu update marker map dan grafik tren
+            renderChoropleth(provStats);
             renderMapMarkers(ukerStats);
             renderTrend(mTrend);
+        }
+
+        function renderChoropleth(provData) {
+            choroplethLayer.clearLayers();
+            if(!geojsonData) return;
+
+            L.geoJson(geojsonData, {
+                style: function(feature) {
+                    let fName = (feature.properties.PROP_NAME || feature.properties.NAME_1 || "").toUpperCase();
+                    if(fName.includes("JAKARTA")) fName = "DKI JAKARTA";
+                    if(fName.includes("YOGYAKARTA")) fName = "YOGYAKARTA";
+
+                    let val = provData[fName] || 0;
+                    return {
+                        fillColor: getColor(val),
+                        weight: 1.5,
+                        opacity: 1,
+                        color: '#ffffff', 
+                        fillOpacity: 0.55
+                    };
+                }
+            }).addTo(choroplethLayer);
         }
 
         function renderMapMarkers(stats) {
@@ -236,12 +298,25 @@
                         </div>`;
                     
                     const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
-                    const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer)
-                     .bindPopup(`<b>${geoMapping[code].name}</b><br>Volume Sales: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
+                    const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer);
                     
-                    // UPGRADE: Ketika marker pin diklik, ubah nilai filter cabang dan perbarui detail sidebar
+                    let kontribusi = globalTotalSales > 0 ? ((stats[code].os / globalTotalSales) * 100).toFixed(1) : 0;
+                    
+                    marker.bindPopup(`
+                        <div style="font-family:sans-serif; min-width:160px;">
+                            <b style="color:#00529c; font-size:13px;">${geoMapping[code].name}</b><br>
+                            <hr style="margin:4px 0; border:0; border-top:1px solid #ddd;">
+                            <small style="color:#666;">VOLUME SALES:</small><br>
+                            <b style="font-size:14px; color:#333;">${formatRupiah(stats[code].os)}</b><br>
+                            <small style="color:#27ae60;"><b>Kontribusi: ${kontribusi}%</b> vs Nasional</small><br>
+                            <small style="color:#666;">TOTAL NOA:</small> <b>${stats[code].noa} Debitur</b>
+                        </div>
+                    `);
+                    
                     marker.on('click', function() {
                         document.getElementById('filter-uker').value = code;
+                        map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1 });
+                        document.getElementById('btn-reset').style.display = 'block';
                         processData();
                     });
                 }
@@ -269,9 +344,7 @@
                 },
                 options: { 
                     maintainAspectRatio: false, 
-                    layout: {
-                        padding: { left: 18, right: 18, top: 24, bottom: 5 }
-                    },
+                    layout: { padding: { left: 18, right: 18, top: 24, bottom: 5 } },
                     plugins: { 
                         legend: { display: false },
                         datalabels: {
@@ -292,27 +365,18 @@
                             offset: 6,
                             color: '#333',
                             font: { size: 10, weight: 'bold' },
-                            formatter: function(value) {
-                                return value > 0 ? value.toFixed(1) + 'M' : '';
-                            }
+                            formatter: function(value) { return value > 0 ? value.toFixed(1) + 'M' : ''; }
                         }
                     }, 
                     scales: { 
-                        y: { 
-                            display: false,
-                            grid: { display: false },
-                            suggestedMax: Math.max(...data.map(v => v/1e9)) + 15
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#666' }
-                        }
+                        y: { display: false, grid: { display: false }, suggestedMax: Math.max(...data.map(v => v/1e9)) + 15 },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#666' } }
                     } 
                 }
             });
         }
 
-        loadData();
+        loadGeoJSONAndData();
     </script>
 </body>
 </html>
