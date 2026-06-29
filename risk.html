@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struktur Dashboard - Risk & NPL</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: sans-serif;
+            background: #f4f7f6;
+            overflow: hidden;
+        }
+        .navbar {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .nav-btn {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-weight: bold;
+            font-size: 12px;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+        .nav-btn.active {
+            background: #e53e3e; /* Warna Merah untuk menandakan halaman Risk aktif */
+            color: white;
+            border-color: #e53e3e;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .sidebar {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 360px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .panel-header {
+            background: #e53e3e; /* Header Merah khas Manajemen Risiko */
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .placeholder-box {
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            color: #777;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html" class="nav-btn">📈 PERFORMANCE SALES</a>
+        <a href="risk.html" class="nav-btn active">⚠️ DPK & NPL RISK</a>
+    </div>
+
+    <div class="sidebar">
+        <div class="panel-header">🚨 PANEL UTAMA: MONITORING RISIKO</div>
+        
+        <div class="placeholder-box">
+            <h4>[ Rasio Kelayakan Portofolio ]</h4>
+            <p>Tempat Rasio DPK (%), NPL (%), & Total Tunggakan</p>
+        </div>
+        
+        <div class="placeholder-box">
+            <h4>[ Grafik Cabang Bermasalah ]</h4>
+            <p>Tempat Bar Chart Cabang dengan Tunggakan Tertinggi</p>
+        </div>
+
+        <div class="placeholder-box">
+            <h4>[ Tabel Kesehatan Instansi ]</h4>
+            <p>Tempat Detail List Perusahaan/Instansi Zona Merah</p>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Batasan koordinat Indonesia yang sama persis dengan index.html
+        var indonesiaBounds = L.latLngBounds(
+            L.latLng(-11.0, 94.0),
+            L.latLng(6.0, 141.0)
+        );
+
+        var map = L.map('map', {
+            center: [-2.5489, 118.0149],
+            zoom: 5,
+            minZoom: 5,
+            maxBounds: indonesiaBounds,
+            maxBoundsViscosity: 1.0
+        });
+        
+        // Menggunakan tile layer minimalis yang sama agar konsisten
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CartoDB'
+        }).addTo(map);
+
+        setTimeout(function(){ map.invalidateSize(); }, 500);
+    </script>
+</body>
+</html>
