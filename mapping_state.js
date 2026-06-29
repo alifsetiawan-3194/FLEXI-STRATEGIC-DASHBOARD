@@ -1,4 +1,4 @@
-const rawMappingData = `city_code,city_name
+const rawMappingData = `state_code,province
 0201,Kabupaten Lebak
 0202,Kabupaten Pandeglang
 0204,Kabupaten Tangerang
