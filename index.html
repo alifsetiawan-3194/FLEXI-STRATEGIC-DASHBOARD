@@ -23,7 +23,7 @@
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* CSS Pin Peta Custom - PERBAIKAN AKURASI KOORDINAT */
+        /* Layout Pin Peta */
         .custom-div-icon { 
             background: transparent !important;
             border: none !important;
@@ -53,7 +53,6 @@
             transform: translateX(-50%); 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
             pointer-events: none;
-            /* Menaikkan teks ke layer paling atas tanpa merusak posisi titik koordinat */
             z-index: 99999; 
         }
     </style>
@@ -87,8 +86,8 @@
         </div>
 
         <div class="chart-container">
-            <span class="chart-label">Tren Ekspansi Bulanan (Miliar)</span>
-            <div style="height: 140px;"><canvas id="trendChart"></canvas></div>
+            <span class="chart-label">Tren Ekspansi Bulanan</span>
+            <div style="height: 150px; padding-top: 15px;"><canvas id="trendChart"></canvas></div>
         </div>
     </div>
 
@@ -96,6 +95,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
@@ -157,7 +157,7 @@
 
         document.getElementById('filter-month').addEventListener('change', processData);
 
-function processData() {
+        function processData() {
             const m = document.getElementById('filter-month').value;
             let totalSales = 0, totalNOA = 0;
             let mTrend = Array(12).fill(0);
@@ -168,18 +168,13 @@ function processData() {
                 let month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
 
-                // Ambil string loan_account_id dan bersihkan spasi di ujung-ujungnya
                 let loanId = String(d.loan_account_id || "").trim();
                 if (!loanId) return;
 
-                // LOGIC AMAN: Jika angka nol di depan hilang akibat Excel (misal panjang id jadi berkurang),
-                // kita tambahkan kembali nol di depannya secara otomatis sampai formatnya normal.
                 if (loanId.length < 15 && !loanId.startsWith("0")) {
-                    // Menyesuaikan jika standarnya 15 digit, disesuaikan dengan sisa panjang nomor asli
                     loanId = loanId.padStart(15, "0");
                 }
 
-                // Ambil 4 digit awal sebagai kode uker
                 let code = loanId.substring(0, 4);
                 let amt = parseFloat(d.approved_amount || 0);
 
@@ -211,7 +206,6 @@ function processData() {
                             <span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span>
                         </div>`;
                     
-                    // iconAnchor [6,6] menyeimbangkan titik pusat bulatan 12x12px tepat di koordinat lat/lng
                     const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
                     L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer)
                      .bindPopup(`<b>${geoMapping[code].name}</b><br>Volume Sales: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
@@ -222,14 +216,52 @@ function processData() {
         function renderTrend(data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
             if(trendChart) trendChart.destroy();
+            
+            // Daftarkan plugin datalabels secara eksplisit ke chart ini
             trendChart = new Chart(ctx, {
                 type: 'line',
+                plugins: [ChartDataLabels],
                 data: {
                     labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
-                    labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
-                    datasets: [{ data: data.map(v => v/1e9), borderColor: '#00529c', tension: 0.2, fill: true, backgroundColor: 'rgba(0,82,156,0.05)' }]
+                    datasets: [{ 
+                        data: data.map(v => v/1e9), 
+                        borderColor: '#00529c', 
+                        tension: 0.2, 
+                        fill: true, 
+                        backgroundColor: 'rgba(0,82,156,0.05)',
+                        pointBackgroundColor: '#00529c',
+                        pointRadius: 4
+                    }]
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: function(value) { return 'Rp' + value + 'M'; } } } } }
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: {
+                            align: 'top',      // Posisi teks di atas titik koordinat lingkaran
+                            anchor: 'end',
+                            offset: 4,         // Jarak spasi mikro antara teks dan titik
+                            color: '#333',     // Warna teks nominal
+                            font: { size: 10, weight: 'bold' },
+                            formatter: function(value) {
+                                // Sembunyikan label jika datanya masih kosong (0) agar tidak menumpuk di dasar garis
+                                return value > 0 ? value.toFixed(1) + 'M' : '';
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        // MENYEMBUNYIKAN BAR KIRI TOTAL (SUMBU Y)
+                        y: { 
+                            display: false,
+                            grid: { display: false } 
+                        },
+                        // Sumbu X (Nama Bulan) Tetap Tampil Bersih
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#666' }
+                        }
+                    } 
+                }
             });
         }
 
