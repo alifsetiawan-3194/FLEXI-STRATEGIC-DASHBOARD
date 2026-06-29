@@ -87,7 +87,7 @@
 
         <div class="chart-container">
             <span class="chart-label">Tren Ekspansi Bulanan</span>
-            <div style="height: 150px; padding-top: 15px;"><canvas id="trendChart"></canvas></div>
+            <div style="height: 160px;"><canvas id="trendChart"></canvas></div>
         </div>
     </div>
 
@@ -208,10 +208,11 @@
                     
                     const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
                     L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer)
-                     .bindPopup(`<b>${geoMapping[code].name}</b><br>Outstanding: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
+                     .bindPopup(`<b>${geoMapping[code].name}</b><br>Volume Sales: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
                 }
             });
         }
+
         function renderTrend(data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
             if(trendChart) trendChart.destroy();
@@ -232,43 +233,41 @@
                     }]
                 },
                 options: { 
-                    maintainAspectRatio: false,
-                    // FIX TERPOTONG: Memberikan ruang aman di sekeliling grafik
+                    maintainAspectRatio: false, 
                     layout: {
                         padding: {
-                            left: 15,
-                            right: 15,
-                            top: 20,
+                            left: 18,
+                            right: 18,
+                            top: 24,
                             bottom: 5
                         }
                     },
                     plugins: { 
                         legend: { display: false },
                         datalabels: {
-                            // FIX TUMPANG TINDIH: Deteksi otomatis arah grafik untuk menentukan posisi teks
                             align: function(context) {
                                 const index = context.dataIndex;
                                 const value = context.dataset.data[index];
                                 const prevValue = index > 0 ? context.dataset.data[index - 1] : null;
                                 
-                                // Jika nilai turun drastis dibanding bulan lalu, taruh di bawah titik agar tidak tabrakan
-                                if (prevValue !== null && prevValue - value > 15) {
+                                // Jika nilai turun dibanding bulan lalu, pasang di bawah agar tidak tabrakan
+                                if (prevValue !== null && (prevValue - value) > 10) {
                                     return 'bottom';
                                 }
-                                return 'top'; // Default di atas titik
+                                return 'top';
                             },
                             anchor: function(context) {
                                 const index = context.dataIndex;
                                 const value = context.dataset.data[index];
                                 const prevValue = index > 0 ? context.dataset.data[index - 1] : null;
                                 
-                                if (prevValue !== null && prevValue - value > 15) {
+                                if (prevValue !== null && (prevValue - value) > 10) {
                                     return 'start';
                                 }
                                 return 'end';
                             },
-                            offset: 6, // Jarak piksel aman dari titik koordinat
-                            color: '#333', 
+                            offset: 6,
+                            color: '#333',
                             font: { size: 10, weight: 'bold' },
                             formatter: function(value) {
                                 return value > 0 ? value.toFixed(1) + 'M' : '';
@@ -279,8 +278,7 @@
                         y: { 
                             display: false,
                             grid: { display: false },
-                            // Memberikan buffer nilai maksimum agar label teratas tidak mentok ceiling langit-langit
-                            suggestedMax: Math.max(...data.map(v => v/1e9)) + 15 
+                            suggestedMax: Math.max(...data.map(v => v/1e9)) + 15
                         },
                         x: {
                             grid: { display: false },
@@ -290,3 +288,8 @@
                 }
             });
         }
+
+        loadData();
+    </script>
+</body>
+</html>
