@@ -208,16 +208,14 @@
                     
                     const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
                     L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer)
-                     .bindPopup(`<b>${geoMapping[code].name}</b><br>Volume Sales: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
+                     .bindPopup(`<b>${geoMapping[code].name}</b><br>Outstanding: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
                 }
             });
         }
-
         function renderTrend(data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
             if(trendChart) trendChart.destroy();
             
-            // Daftarkan plugin datalabels secara eksplisit ke chart ini
             trendChart = new Chart(ctx, {
                 type: 'line',
                 plugins: [ChartDataLabels],
@@ -234,28 +232,56 @@
                     }]
                 },
                 options: { 
-                    maintainAspectRatio: false, 
+                    maintainAspectRatio: false,
+                    // FIX TERPOTONG: Memberikan ruang aman di sekeliling grafik
+                    layout: {
+                        padding: {
+                            left: 15,
+                            right: 15,
+                            top: 20,
+                            bottom: 5
+                        }
+                    },
                     plugins: { 
                         legend: { display: false },
                         datalabels: {
-                            align: 'top',      // Posisi teks di atas titik koordinat lingkaran
-                            anchor: 'end',
-                            offset: 4,         // Jarak spasi mikro antara teks dan titik
-                            color: '#333',     // Warna teks nominal
+                            // FIX TUMPANG TINDIH: Deteksi otomatis arah grafik untuk menentukan posisi teks
+                            align: function(context) {
+                                const index = context.dataIndex;
+                                const value = context.dataset.data[index];
+                                const prevValue = index > 0 ? context.dataset.data[index - 1] : null;
+                                
+                                // Jika nilai turun drastis dibanding bulan lalu, taruh di bawah titik agar tidak tabrakan
+                                if (prevValue !== null && prevValue - value > 15) {
+                                    return 'bottom';
+                                }
+                                return 'top'; // Default di atas titik
+                            },
+                            anchor: function(context) {
+                                const index = context.dataIndex;
+                                const value = context.dataset.data[index];
+                                const prevValue = index > 0 ? context.dataset.data[index - 1] : null;
+                                
+                                if (prevValue !== null && prevValue - value > 15) {
+                                    return 'start';
+                                }
+                                return 'end';
+                            },
+                            offset: 6, // Jarak piksel aman dari titik koordinat
+                            color: '#333', 
                             font: { size: 10, weight: 'bold' },
                             formatter: function(value) {
-                                // Sembunyikan label jika datanya masih kosong (0) agar tidak menumpuk di dasar garis
                                 return value > 0 ? value.toFixed(1) + 'M' : '';
                             }
                         }
                     }, 
                     scales: { 
-                        // MENYEMBUNYIKAN BAR KIRI TOTAL (SUMBU Y)
                         y: { 
                             display: false,
-                            grid: { display: false } 
+                            grid: { display: false },
+                            // Memberikan buffer nilai maksimum agar label teratas tidak mentok ceiling langit-langit
+                            suggestedMax: Math.max(...data.map(v => v/1e9)) + 15 
                         },
-                        // Sumbu X (Nama Bulan) Tetap Tampil Bersih
                         x: {
                             grid: { display: false },
                             ticks: { font: { size: 10, weight: 'bold' }, color: '#666' }
@@ -264,8 +290,3 @@
                 }
             });
         }
-
-        loadData();
-    </script>
-</body>
-</html>
