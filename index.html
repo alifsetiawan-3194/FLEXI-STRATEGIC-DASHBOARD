@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Kabupaten/Kota (External CSV Mapping)</title>
+    <title>Flexi Dashboard 2026 - Offline Mode No Error</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
@@ -40,7 +40,7 @@
 
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Batas Wilayah Kabupaten/Kota...</div>
+        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Menuat Batas Wilayah Kabupaten/Kota...</div>
     </div>
 
     <div class="navbar">
@@ -81,6 +81,9 @@
     </div>
 
     <div id="map"></div>
+
+    <script src="mapping_state.js"></script>
+    <script src="data_pencairan_2026.js"></script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -132,7 +135,7 @@
         let trendChart = null;
         let rawSales = [];
         let geojsonData = null; 
-        let stateDictionary = {}; // Menampung hasil pembacaan file mapping_state.csv secara dinamis
+        let stateDictionary = {}; 
         let globalTotalSales = 0; 
 
         function formatRupiah(val) {
@@ -152,39 +155,33 @@
                    v > 0     ? '#c6dbef' : 'rgba(0,0,0,0.03)';
         }
 
-        // MEMBACA FILE CSV MAPPING DARI LUAR SECARA DINAMIS
-        async function loadGeoJSONAndData() {
+        async function initDashboard() {
             try {
-                document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota & Kamus Data...";
+                document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
                 
-                // Ambil Peta Kabupaten Kompresi Tinggi + File mapping_state.csv eksternal kamu
-                const [geoRes, validationRes] = await Promise.all([
-                    fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-kab.json'),
-                    fetch('mapping_state.csv') 
-                ]);
-                
+                // GeoJSON dari internet aman tanpa block CORS
+                const geoRes = await fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-kab.json');
                 geojsonData = await geoRes.json();
-                const validationText = await validationRes.text();
                 
-                // Proses Parsing Otomatis 514 baris file mapping_state.csv kamu ke Memory browser
-                const parsedValidation = Papa.parse(validationText, { header: true, skipEmptyLines: true }).data;
+                document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
+                
+                // Membaca isi variabel rawMappingData yang otomatis tersedia dari file mapping_state.js
+                const parsedValidation = Papa.parse(rawMappingData, { header: true, skipEmptyLines: true }).data;
                 parsedValidation.forEach(row => {
-                    if(row.state_code && row.nama_provinsi) { // (Catatan: nama_provinsi di sini menyimpan nama KABUPATEN/KOTA sesuai filemu)
+                    if(row.state_code && row.nama_provinsi) {
                         stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
                     }
                 });
 
-                document.getElementById('loading-text').innerText = "Memuat Berkas CSV Pencairan Aktif...";
+                document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
                 
-                const res = await fetch('data_pencairan_2026.csv');
-                if(!res.ok) throw new Error("Gagal memuat file CSV Pencairan");
-                const text = await res.text();
+                // Membaca isi variabel rawPencairanData yang otomatis tersedia dari file data_pencairan_2026.js
+                rawSales = Papa.parse(rawPencairanData, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 
-                rawSales = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 processData();
             } catch (e) { 
                 console.error(e);
-                document.getElementById('loading-overlay').innerText = "Gagal memuat resource dashboard. Pastikan file mapping_state.csv dan data_pencairan_2026.csv berada di satu folder dan dijalankan lewat Local Server / Live Server.";
+                document.getElementById('loading-overlay').innerText = "Terjadi kesalahan internal data. Periksa penulisan variabel javascript.";
             }
         }
 
@@ -244,7 +241,6 @@
                 let sCode = String(d.state_code || "").trim();
                 if(sCode.length === 3) sCode = "0" + sCode; 
                 
-                // Ambil nama kota dari hasil pembacaan mapping_state.csv eksternal!
                 let cityName = stateDictionary[sCode] || "LAINNYA"; 
 
                 if (cityName !== "LAINNYA") {
@@ -270,7 +266,6 @@
                     let fName = (feature.properties.NAME_2 || feature.properties.KAB_KOT || "").toUpperCase();
                     fName = fName.replace("KABUPATEN ", "").replace("KOTA ", "").trim();
 
-                    // Penyelarasan format penulisan khusus Kota Surakarta (Solo) agar sinkron dengan GeoJSON nasional
                     if(fName === "SOLO") fName = "SURAKARTA";
 
                     let val = cityData[fName] || 0;
@@ -373,7 +368,7 @@
             });
         }
 
-        loadGeoJSONAndData();
+        initDashboard();
     </script>
 </body>
 </html>
