@@ -22,7 +22,10 @@
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .custom-pin { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; background: #00529c; position: absolute; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 1px 1px 6px rgba(0,0,0,0.3); }
+        
+        /* CSS Pin Peta Custom */
+        .custom-pin { width: 12px; height: 12px; border-radius: 50%; background: #00529c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); }
+        .pin-label { background: rgba(0, 82, 156, 0.85); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; white-space: nowrap; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -113,7 +116,9 @@
                 const res = await fetch('data_pencairan_2026.csv');
                 if(!res.ok) throw new Error("Gagal memuat file CSV");
                 const text = await res.text();
-                rawSales = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+                
+                // Menggunakan PapaParse dengan pembersihan otomatis karakter kutip
+                rawSales = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 processData();
             } catch (e) { 
                 console.error(e);
@@ -130,15 +135,17 @@
             let ukerStats = {};
 
             rawSales.forEach(d => {
-                let month = parseInt((d.tanggal_pencairan || "").split('-')[1]);
+                let tgl = d.tanggal_pencairan || "";
+                let month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
 
-                // Ambil 4 digit pertama dari loan_account_id sebagai kode cabang
-                let code = String(d.loan_account_id || "").substring(0, 4);
+                // FIX LOGIC: Ambil 4 digit angka pertama dari kolom loan_account_id murni
+                let loanId = String(d.loan_account_id || "");
+                let code = loanId.substring(0, 4);
                 let amt = parseFloat(d.approved_amount || 0);
 
                 totalSales += amt;
-                totalNOA += 1; // 1 baris dihitung 1 nasabah (NOA)
+                totalNOA += 1; 
                 if(month) mTrend[month-1] += amt;
 
                 if(geoMapping[code]) {
@@ -160,7 +167,13 @@
             markersLayer.clearLayers();
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
-                    const pin = L.divIcon({ className: 'custom-div-icon', html: `<div class='custom-pin'></div>`, iconSize: [22, 22], iconAnchor: [11,22] });
+                    // Membuat pin bulatan dan text label permanen di atasnya
+                    const pinHTML = `
+                        <div class='custom-pin'>
+                            <span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span>
+                        </div>`;
+                    
+                    const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
                     L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer)
                      .bindPopup(`<b>${geoMapping[code].name}</b><br>Volume Sales: ${formatRupiah(stats[code].os)}<br>NOA: ${stats[code].noa}`);
                 }
