@@ -3,223 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Performance</title>
+    <title>Struktur Dashboard - Performance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif; background: #f4f7f6; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
         
-        /* Global Top Navbar */
-        .navbar {
-            position: absolute; top: 15px; left: 20px; display: flex; gap: 10px; z-index: 1000;
-        }
-        .nav-btn {
-            background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; color: #555;
-            border: 1px solid #ddd; transition: all 0.2s;
-        }
+        /* TOP NAVBAR NAVIGATION */
+        .navbar { position: absolute; top: 15px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
+        .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; color: #555; border: 1px solid #ddd; }
         .nav-btn.active { background: #00529c; color: white; border-color: #00529c; }
-        .nav-btn:hover { transform: translateY(-2px); }
 
+        /* MAIN MAP LAYOUT */
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        .sidebar {
-            position: absolute; top: 80px; right: 20px; width: 360px;
-            background: white; border-radius: 12px; padding: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 85vh; overflow-y: auto;
-        }
-        .filter-box { background: #00529c; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: white; }
-        .filter-select { width: 100%; padding: 8px; border-radius: 5px; border: none; margin-top: 5px; font-weight: bold; color: #333; }
-        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #00529c; }
-        .stat-card small { color: #666; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .stat-card div { font-weight: bold; font-size: 18px; color: #333; margin-top: 2px; }
-        .chart-container { margin-bottom: 15px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee; }
-        .chart-label { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
-        
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .custom-pin { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; background: #00529c; position: absolute; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 1px 1px 6px rgba(0,0,0,0.3); }
+        /* SIDEBAR PANEL */
+        .sidebar { position: absolute; top: 80px; right: 20px; width: 360px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 85vh; overflow-y: auto; }
+        .panel-header { background: #00529c; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: white; font-weight: bold; font-size: 14px; }
+        .placeholder-box { background: #f8f9fa; border: 2px dashed #ccc; padding: 20px; text-align: center; color: #777; margin-bottom: 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="loader"></div>
-        <div style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Analisa Performance...</div>
-    </div>
-    
     <div class="navbar">
         <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
         <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
     </div>
 
     <div class="sidebar">
-        <div class="filter-box">
-            <span style="font-size: 11px; font-weight: bold;">PERIODE PENCAIRAN 2026</span>
-            <select id="filter-month" class="filter-select">
-                <option value="all">Semua Bulan</option>
-                <option value="1">Januari</option><option value="2">Februari</option>
-                <option value="3">Maret</option><option value="4">April</option>
-                <option value="5">Mei</option>
-            </select>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom: 8px;">
-            <div class="stat-card" style="flex:1;"><small>Total Sales (OS)</small><div id="total-os">Rp 0</div></div>
-            <div class="stat-card" style="flex:1; border-left-color: #27ae60;"><small>Total NOA</small><div id="total-noa">0</div></div>
-        </div>
-
-        <div class="chart-container">
-            <span class="chart-label">Tren Ekspansi Bulanan (Miliar)</span>
-            <div style="height: 140px;"><canvas id="trendChart"></canvas></div>
+        <div class="panel-header">📊 PANEL UTAMA: PERFORMANCE</div>
+        
+        <div class="placeholder-box">
+            <h4>[ Metrik Ringkasan ]</h4>
+            <p>Tempat Total Sales & Total NOA</p>
         </div>
         
-        <div class="chart-container">
-            <span class="chart-label">Top 3 Cabang Terbesar</span>
-            <div style="height: 150px;"><canvas id="barChart"></canvas></div>
+        <div class="placeholder-box">
+            <h4>[ Grafik Tren Bulanan ]</h4>
+            <p>Tempat Line Chart Ekspansi Bisnis</p>
         </div>
 
-        <button onclick="location.reload()" style="width:100%; padding:10px; cursor:pointer; font-weight:bold; background:#00529c; color:white; border:none; border-radius:6px;">REFRESH DATA</button>
+        <div class="placeholder-box">
+            <h4>[ Grafik Top Cabang ]</h4>
+            <p>Tempat Bar Chart Penjualan Terbesar</p>
+        </div>
     </div>
 
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-
     <script>
-        const geoMapping = {
-            "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
-            "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
-            "0025": { name: "CB BEKASI", lat: -6.238472, lng: 106.975417 },
-            "0110": { name: "CB BANDUNG", lat: -6.9175, lng: 107.6191 },
-            "0140": { name: "CB CIREBON", lat: -6.7320, lng: 108.5523 },
-            "0310": { name: "CB SEMARANG", lat: -6.9667, lng: 110.4167 },
-            "0320": { name: "CB SOLO", lat: -7.5661, lng: 110.8243 },
-            "0330": { name: "CB TEMANGGUNG", lat: -7.3167, lng: 110.1833 },
-            "0350": { name: "CB YOGYAKARTA", lat: -7.7956, lng: 110.3695 },
-            "0410": { name: "CB SURABAYA", lat: -7.2575, lng: 112.7521 },
-            "0411": { name: "CB SIDOARJO", lat: -7.4478, lng: 112.7183 },
-            "0420": { name: "CB MALANG", lat: -7.9839, lng: 112.6214 },
-            "0430": { name: "CB LAMONGAN", lat: -7.1192, lng: 112.4151 },
-            "1110": { name: "CB MEDAN", lat: 3.5952, lng: 98.6722 },
-            "1310": { name: "CB PEKANBARU", lat: 0.5071, lng: 101.4478 },
-            "1312": { name: "CB LUBUK DALAM", lat: 0.6387, lng: 101.8315 },
-            "1313": { name: "CB UJUNG BATU", lat: 0.7077, lng: 100.5284 },
-            "1314": { name: "CB AIR MOLEK", lat: -0.4578, lng: 102.2901 },
-            "1315": { name: "KK DALU DALU", lat: 1.1074, lng: 100.4116 },
-            "1520": { name: "CB PALEMBANG", lat: -2.9761, lng: 104.7754 },
-            "1710": { name: "CB LAMPUNG", lat: -5.3971, lng: 105.2668 },
-            "3210": { name: "CB MAKASSAR", lat: -5.1476, lng: 119.4327 },
-            "4010": { name: "CB DENPASAR", lat: -8.6705, lng: 115.2126 }
-        };
-
+        // Inisialisasi Peta Dasar
         var map = L.map('map').setView([-2.5489, 118.0149], 5);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-        var markersLayer = L.layerGroup().addTo(map);
-        
-        let barChart = null, trendChart = null;
-        let rawSales = [];
-
-        function formatRupiah(val) {
-            if (!val) return "Rp 0";
-            if (val >= 1e12) return "Rp " + (val / 1e12).toFixed(2) + " T";
-            if (val >= 1e9) return "Rp " + (val / 1e9).toFixed(2) + " M";
-            return "Rp " + Math.round(val).toLocaleString('id-ID');
-        }
-
-        function cleanVal(v) { return parseFloat(String(v || 0).replace(/[^0-9.-]+/g, "")) || 0; }
-
-        async function loadData() {
-            try {
-                const res = await fetch('data_pencairan_2026.csv');
-                rawSales = Papa.parse(await res.text(), { header: true, skipEmptyLines: true }).data;
-                processData();
-                setTimeout(() => map.invalidateSize(), 400);
-            } catch (e) { console.error(e); }
-        }
-
-        document.getElementById('filter-month').addEventListener('change', processData);
-
-        function processData() {
-            const m = document.getElementById('filter-month').value;
-            let totalOS = 0, totalNOA = 0;
-            let mTrend = Array(12).fill(0);
-            let ukerStats = {};
-
-            rawSales.forEach(d => {
-                let month = parseInt((d.tanggal_pencairan || d.TANGGAL || "").split('-')[1]);
-                if (m !== 'all' && month != m) return;
-
-                let code = String(d.loan_account_id || d.NOREK || "").substring(0, 4);
-                let amt = cleanVal(d.approved_amount || d.PLAFOND);
-
-                totalOS += amt;
-                totalNOA += 1;
-                if(month) mTrend[month-1] += amt;
-
-                if(geoMapping[code]) {
-                    if(!ukerStats[code]) ukerStats[code] = { os: 0 };
-                    ukerStats[code].os += amt;
-                }
-            });
-
-            document.getElementById('total-os').innerText = formatRupiah(totalOS);
-            document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
-            document.getElementById('loading-overlay').style.display = 'none';
-
-            renderMapMarkers(ukerStats);
-            renderTrend(mTrend);
-            updateBar(ukerStats);
-        }
-
-        function renderMapMarkers(stats) {
-            markersLayer.clearLayers();
-            Object.keys(stats).forEach(code => {
-                if(geoMapping[code]) {
-                    const pin = L.divIcon({ className: 'custom-div-icon', html: `<div class='custom-pin'></div>`, iconSize: [22, 22], iconAnchor: [11,22] });
-                    L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer)
-                     .bindPopup(`<b>${geoMapping[code].name}</b><br>Sales Volume: ${formatRupiah(stats[code].os)}`);
-                }
-            });
-        }
-
-        function renderTrend(data) {
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            if(trendChart) trendChart.destroy();
-            trendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
-                    datasets: [{ data: data.map(v => v/1e9), borderColor: '#00529c', tension: 0.2, fill: true, backgroundColor: 'rgba(0,82,156,0.05)' }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        }
-
-        function updateBar(stats) {
-            const ctx = document.getElementById('barChart').getContext('2d');
-            if(barChart) barChart.destroy();
-            let sorted = Object.entries(stats).sort((a,b) => b[1].os - a[1].os).slice(0, 3);
-            barChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sorted.map(x => geoMapping[x[0]].name.replace("CB ","")),
-                    datasets: [{ data: sorted.map(x => x[1].os), backgroundColor: '#27ae60', borderRadius: 4 }]
-                },
-                options: { 
-                    indexAxis: 'y', 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
-                    scales: { x: { ticks: { callback: function(v) { return 'Rp' + (v/1e9) + 'M'; } } } }
-                }
-            });
-        }
-
-        loadData();
     </script>
 </body>
 </html>
