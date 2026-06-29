@@ -160,7 +160,7 @@
                 document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
                 
                 // GeoJSON dari internet aman tanpa block CORS
-                const geoRes = await fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-kab.json');
+                const geoRes = await fetch('const geoRes = await fetch('https://raw.githubusercontent.com/anshori/indonesia-geojson/master/indonesia-kab.json');
                 geojsonData = await geoRes.json();
                 
                 document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
