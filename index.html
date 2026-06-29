@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Performance Premium</title>
+    <title>Flexi Dashboard 2026 - Kabupaten/Kota (External CSV Mapping)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
@@ -24,7 +24,6 @@
         .chart-container { margin-bottom: 15px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee; }
         .chart-label { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
         
-        /* Floating Reset Button di Atas Peta */
         .reset-btn { position: absolute; bottom: 30px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border: none; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; transition: 0.2s; }
         .reset-btn:hover { background: #c0392b; }
 
@@ -32,7 +31,6 @@
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Layout Pin Peta */
         .custom-div-icon { background: transparent !important; border: none !important; }
         .custom-pin { width: 12px; height: 12px; border-radius: 50%; background: #00529c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; cursor: pointer; }
         .pin-label { background: rgba(0, 82, 156, 0.9); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -24px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.3); pointer-events: none; z-index: 99999; }
@@ -42,7 +40,7 @@
 
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Basis Peta Wilayah...</div>
+        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Batas Wilayah Kabupaten/Kota...</div>
     </div>
 
     <div class="navbar">
@@ -90,7 +88,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
-        // Mapping Koordinat Pin Cabang Tetap Sama Seperti Versi Sebelumnya
         const geoMapping = {
             "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
             "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
@@ -125,7 +122,6 @@
             selectUker.appendChild(opt);
         });
 
-        // Batasan Peta (Indonesia Max Bounds) Agar Tidak Tergeser Keluar Negeri
         var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
         var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0 });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
@@ -136,7 +132,7 @@
         let trendChart = null;
         let rawSales = [];
         let geojsonData = null; 
-        let stateDictionary = {}; // Objek Kamus Validasi Kota/Provinsi
+        let stateDictionary = {}; // Menampung hasil pembacaan file mapping_state.csv secara dinamis
         let globalTotalSales = 0; 
 
         function formatRupiah(val) {
@@ -147,48 +143,48 @@
             return "Rp " + Math.round(val).toLocaleString('id-ID');
         }
 
-        // Penentu Tingkat Warna Wilayah (Choropleth)
         function getColor(v) {
-            return v > 500e9 ? '#084594' :
-                   v > 200e9 ? '#2171b5' :
-                   v > 100e9 ? '#4292c6' :
-                   v > 50e9  ? '#6baed6' :
-                   v > 10e9  ? '#9ecae1' :
+            return v > 100e9 ? '#084594' :
+                   v > 50e9  ? '#2171b5' :
+                   v > 20e9  ? '#4292c6' :
+                   v > 10e9  ? '#6baed6' :
+                   v > 5e9   ? '#9ecae1' :
                    v > 0     ? '#c6dbef' : 'rgba(0,0,0,0.03)';
         }
 
-        // Membaca 3 File Sekaligus: GeoJSON Publik, File Kamus Permanen, Baru CSV Utama
+        // MEMBACA FILE CSV MAPPING DARI LUAR SECARA DINAMIS
         async function loadGeoJSONAndData() {
             try {
-                document.getElementById('loading-text').innerText = "Memuat Basis Peta & Kamus Wilayah...";
+                document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota & Kamus Data...";
                 
+                // Ambil Peta Kabupaten Kompresi Tinggi + File mapping_state.csv eksternal kamu
                 const [geoRes, validationRes] = await Promise.all([
-                    fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-prov.json'),
+                    fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-kab.json'),
                     fetch('mapping_state.csv') 
                 ]);
                 
                 geojsonData = await geoRes.json();
                 const validationText = await validationRes.text();
                 
-                // Proses Memasukkan File Validasi Permanen ke Kamus Memory
+                // Proses Parsing Otomatis 514 baris file mapping_state.csv kamu ke Memory browser
                 const parsedValidation = Papa.parse(validationText, { header: true, skipEmptyLines: true }).data;
                 parsedValidation.forEach(row => {
-                    if(row.state_code && row.nama_provinsi) {
+                    if(row.state_code && row.nama_provinsi) { // (Catatan: nama_provinsi di sini menyimpan nama KABUPATEN/KOTA sesuai filemu)
                         stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
                     }
                 });
 
-                document.getElementById('loading-text').innerText = "Memuat Berkas CSV Pencairan...";
+                document.getElementById('loading-text').innerText = "Memuat Berkas CSV Pencairan Aktif...";
                 
                 const res = await fetch('data_pencairan_2026.csv');
-                if(!res.ok) throw new Error("Gagal memuat file CSV");
+                if(!res.ok) throw new Error("Gagal memuat file CSV Pencairan");
                 const text = await res.text();
                 
                 rawSales = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 processData();
             } catch (e) { 
                 console.error(e);
-                document.getElementById('loading-overlay').innerText = "Gagal memuat resource dashboard. Pastikan file mapping_state.csv dan data_pencairan_2026.csv berada di satu folder.";
+                document.getElementById('loading-overlay').innerText = "Gagal memuat resource dashboard. Pastikan file mapping_state.csv dan data_pencairan_2026.csv berada di satu folder dan dijalankan lewat Local Server / Live Server.";
             }
         }
 
@@ -218,7 +214,7 @@
             let totalSales = 0, totalNOA = 0;
             let mTrend = Array(12).fill(0);
             let ukerStats = {};
-            let provStats = {}; 
+            let cityStats = {}; 
 
             globalTotalSales = rawSales.reduce((acc, d) => acc + parseFloat(d.approved_amount || 0), 0);
 
@@ -245,15 +241,14 @@
                     ukerStats[code].noa += 1;
                 }
 
-                // VALIDASI KODE WILAYAH: Kawinkan data state_code transaksi dengan file kamus permanen
                 let sCode = String(d.state_code || "").trim();
-                let pName = stateDictionary[sCode] || "LAINNYA"; 
+                if(sCode.length === 3) sCode = "0" + sCode; 
+                
+                // Ambil nama kota dari hasil pembacaan mapping_state.csv eksternal!
+                let cityName = stateDictionary[sCode] || "LAINNYA"; 
 
-                if(pName.includes("JAKARTA")) pName = "DKI JAKARTA";
-                if(pName.includes("YOGYAKARTA")) pName = "YOGYAKARTA";
-
-                if (pName !== "LAINNYA") {
-                    provStats[pName] = (provStats[pName] || 0) + amt;
+                if (cityName !== "LAINNYA") {
+                    cityStats[cityName] = (cityStats[cityName] || 0) + amt;
                 }
             });
 
@@ -261,28 +256,30 @@
             document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
             document.getElementById('loading-overlay').style.display = 'none';
 
-            renderChoropleth(provStats);
+            renderChoropleth(cityStats);
             renderMapMarkers(ukerStats);
             renderTrend(mTrend);
         }
 
-        function renderChoropleth(provData) {
+        function renderChoropleth(cityData) {
             choroplethLayer.clearLayers();
             if(!geojsonData) return;
 
             L.geoJson(geojsonData, {
                 style: function(feature) {
-                    let fName = (feature.properties.PROP_NAME || feature.properties.NAME_1 || "").toUpperCase();
-                    if(fName.includes("JAKARTA")) fName = "DKI JAKARTA";
-                    if(fName.includes("YOGYAKARTA")) fName = "YOGYAKARTA";
+                    let fName = (feature.properties.NAME_2 || feature.properties.KAB_KOT || "").toUpperCase();
+                    fName = fName.replace("KABUPATEN ", "").replace("KOTA ", "").trim();
 
-                    let val = provData[fName] || 0;
+                    // Penyelarasan format penulisan khusus Kota Surakarta (Solo) agar sinkron dengan GeoJSON nasional
+                    if(fName === "SOLO") fName = "SURAKARTA";
+
+                    let val = cityData[fName] || 0;
                     return {
                         fillColor: getColor(val),
-                        weight: 1.5,
+                        weight: 1, 
                         opacity: 1,
                         color: '#ffffff', 
-                        fillOpacity: 0.55
+                        fillOpacity: 0.6
                     };
                 }
             }).addTo(choroplethLayer);
