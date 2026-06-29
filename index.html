@@ -157,7 +157,7 @@
 
         document.getElementById('filter-month').addEventListener('change', processData);
 
-        function processData() {
+function processData() {
             const m = document.getElementById('filter-month').value;
             let totalSales = 0, totalNOA = 0;
             let mTrend = Array(12).fill(0);
@@ -168,7 +168,18 @@
                 let month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
 
-                let loanId = String(d.loan_account_id || "");
+                // Ambil string loan_account_id dan bersihkan spasi di ujung-ujungnya
+                let loanId = String(d.loan_account_id || "").trim();
+                if (!loanId) return;
+
+                // LOGIC AMAN: Jika angka nol di depan hilang akibat Excel (misal panjang id jadi berkurang),
+                // kita tambahkan kembali nol di depannya secara otomatis sampai formatnya normal.
+                if (loanId.length < 15 && !loanId.startsWith("0")) {
+                    // Menyesuaikan jika standarnya 15 digit, disesuaikan dengan sisa panjang nomor asli
+                    loanId = loanId.padStart(15, "0");
+                }
+
+                // Ambil 4 digit awal sebagai kode uker
                 let code = loanId.substring(0, 4);
                 let amt = parseFloat(d.approved_amount || 0);
 
