@@ -23,9 +23,37 @@
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* CSS Pin Peta Custom */
-        .custom-pin { width: 12px; height: 12px; border-radius: 50%; background: #00529c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); }
-        .pin-label { background: rgba(0, 82, 156, 0.85); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; white-space: nowrap; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        /* CSS Pin Peta Custom - FIX LAYER TENGGELAM */
+        .custom-div-icon { 
+            position: relative; 
+            z-index: 9999 !important; /* Memaksa pin naik ke layer teratas di atas teks wilayah bawaan peta */
+        }
+        .custom-pin { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            background: #00529c; 
+            border: 2px solid #fff; 
+            box-shadow: 0px 0px 6px rgba(0,0,0,0.5); 
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .pin-label { 
+            background: rgba(0, 82, 156, 0.9); 
+            color: white; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: bold; 
+            white-space: nowrap; 
+            position: absolute; 
+            top: -22px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -117,7 +145,6 @@
                 if(!res.ok) throw new Error("Gagal memuat file CSV");
                 const text = await res.text();
                 
-                // Menggunakan PapaParse dengan pembersihan otomatis karakter kutip
                 rawSales = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 processData();
             } catch (e) { 
@@ -139,7 +166,6 @@
                 let month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
 
-                // FIX LOGIC: Ambil 4 digit angka pertama dari kolom loan_account_id murni
                 let loanId = String(d.loan_account_id || "");
                 let code = loanId.substring(0, 4);
                 let amt = parseFloat(d.approved_amount || 0);
@@ -167,7 +193,6 @@
             markersLayer.clearLayers();
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
-                    // Membuat pin bulatan dan text label permanen di atasnya
                     const pinHTML = `
                         <div class='custom-pin'>
                             <span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span>
