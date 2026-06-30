@@ -9,7 +9,7 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
         #map { height: 100vh; width: 100%; position: absolute; z-index: 1; }
         
-        /* Menu Navigasi Pojok Kiri Atas */
+        /* 1. Navigasi Menu Tetap Aman di Pojok Kiri Atas */
         .navbar { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
         .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; display: flex; align-items: center; gap: 5px; }
         .nav-btn.active { background: #00529c; color: white; }
@@ -144,18 +144,17 @@
                 let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
                 rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
                 
-                // GENERATE DROPDOWN BULAN SEBANYAK DATA YANG ADA
+                // Menyiapkan pilihan bulan otomatis dari isi file data
                 generateMonthDropdown();
                 
                 processData();
             } catch (e) { 
-                document.getElementById('loading-overlay').innerHTML = `<div style="color:#e74c3c;">❌ Eror Sinkronisasi Data Internal.</div>`;
+                document.getElementById('loading-overlay').innerHTML = `<div style="color:#e74c3c; font-weight:bold; padding:20px; text-align:center;">❌ Eror Sinkronisasi Data Internal.<br><small>${e.message}</small></div>`;
             }
         }
 
         function generateMonthDropdown() {
             let uniqueMonths = new Set();
-            
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "";
                 let month = parseInt(tgl.split('-')[1]);
@@ -164,7 +163,6 @@
                 }
             });
 
-            // Urutkan bulan dari terkecil ke terbesar (Januari -> Desember)
             let sortedMonths = Array.from(uniqueMonths).sort((a, b) => a - b);
             const selectMonth = document.getElementById('filter-month');
 
@@ -178,6 +176,7 @@
 
         document.getElementById('filter-month').addEventListener('change', processData);
         document.getElementById('filter-uker').addEventListener('change', function() {
+            // 2. Autozoom Cabang Berfungsi Normal Kembali
             const code = this.value;
             if(code !== 'all' && geoMapping[code]) {
                 map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1.2 });
@@ -202,14 +201,14 @@
             
             debtorsLayer.clearLayers();
 
-            // Tahap 1: Hitung total volume nasional berdasarkan bulan terpilih
+            // Hitung total sales nasional murni untuk rasio kontribusi
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
                 totalSalesNasional += parseFloat(d.approved_amount || 0);
             });
 
-            // Tahap 2: Mapping sebaran lokasi PT dan akumulasi data filter uker
+            // Proses pemetaan spasial dan akumulasi statistik uker
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
@@ -218,7 +217,12 @@
                 let code = loanId.substring(0, 4);
                 let amt = parseFloat(d.approved_amount || 0);
 
-                if(month) mTrend[month-1] += (selectedUker === 'all' || code === preferredCode => code === selectedUker) ? amt : 0;
+                // FIX LOGIKA TYPO: Penghitungan grafik line chart berjalan lancar kembali tanpa crash
+                if(month) {
+                    if (selectedUker === 'all' || code === selectedUker) {
+                        mTrend[month-1] += amt;
+                    }
+                }
 
                 if(geoMapping[code]) {
                     if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
@@ -228,7 +232,7 @@
                 if (selectedUker !== 'all' && code !== selectedUker) return;
                 totalSales += amt; totalNOA += 1;
 
-                // Plotting Dot Sebaran Lokasi Perusahaan
+                // Render marker lingkaran lokasi debitur/PT jika koordinat tersedia
                 let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
                 if (latPt && lngPt) {
                     const PTMarker = L.circleMarker([latPt, lngPt], { radius: 5, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.9, fillOpacity: 0.7 });
@@ -245,6 +249,8 @@
 
             document.getElementById('total-os').innerText = formatRupiah(totalSales);
             document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
+            
+            // Sembunyikan loading overlay karena proses render sukses
             document.getElementById('loading-overlay').style.display = 'none';
 
             renderMapLayers(ukerStats, selectedUker, totalSalesNasional);
@@ -259,6 +265,7 @@
                     const dataCabang = stats[code];
                     const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
 
+                    // 3. Floating Detail Card Pencapaian (Sales, NOA, Kontribusi vs Nasional) nempel di Pin Cabang
                     const branchCardHTML = `
                         <div style="font-family: sans-serif; width: 230px; margin:-5px;">
                             <div style="background: #00529c; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
