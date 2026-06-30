@@ -32,7 +32,6 @@
         .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
         .custom-div-icon { background: transparent !important; border: none !important; }
 
-        /* Style Baru Untuk List Top 5 */
         .section-title { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
         .top5-item { display: flex; flex-direction: column; gap: 3px; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 11px; }
         .top5-item:last-child { border-bottom: none; }
@@ -203,8 +202,6 @@
             const m = document.getElementById('filter-month').value;
             const selectedUker = document.getElementById('filter-uker').value;
             let totalSalesNasional = 0, totalSales = 0, totalNOA = 0, mTrend = Array(12).fill(0), ukerStats = {};
-            
-            // Object penampung data agregat per PT
             let companyStats = {};
 
             debtorsLayer.clearLayers();
@@ -238,8 +235,10 @@
                 if (selectedUker !== 'all' && code !== selectedUker) return;
                 totalSales += amt; totalNOA += 1;
 
-                // Hitung agregat per Perusahaan (PT)
-                let compName = d.nama_pt ? d.nama_pt.toUpperCase().trim() : "LAINNYA";
+                // FIX UTAMA: Membaca property 'company' dari datamu
+                let compName = d.company || d.nama_pt || d.nama_perusahaan || d.perusahaan || "";
+                compName = compName ? String(compName).toUpperCase().trim() : "LAINNYA";
+
                 if (!companyStats[compName]) {
                     companyStats[compName] = { sales: 0, noa: 0 };
                 }
@@ -250,10 +249,11 @@
                 if (latPt && lngPt) {
                     currentUkerCoords.push([latPt, lngPt]);
 
+                    let displayCompName = d.company || d.nama_pt || d.nama_perusahaan || "Perusahaan";
                     const PTMarker = L.circleMarker([latPt, lngPt], { radius: 5, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.9, fillOpacity: 0.7 });
                     const tooltipPt = `
                         <div style="font-family: sans-serif; padding: 2px; font-size:11px;">
-                            <strong style="color: #2980b9;">🏢 ${d.nama_pt || "Perusahaan"}</strong><br>
+                            <strong style="color: #2980b9;">🏢 ${displayCompName}</strong><br>
                             <span>Volume: <b>${formatRupiah(amt)}</b></span><br>
                             <small style="color:#777;">Kota: ${d.kota_pt || "-"}</small>
                         </div>`;
@@ -268,7 +268,7 @@
 
             renderMapLayers(ukerStats, selectedUker, totalSalesNasional);
             renderTrend(mTrend);
-            renderTopCompanies(companyStats); // Panggil fungsi render list Top 5
+            renderTopCompanies(companyStats);
 
             if (selectedUker !== 'all') {
                 if (currentUkerCoords.length > 0) {
@@ -280,18 +280,17 @@
             }
         }
 
-        // FUNGSI BARU: Merender Top 5 Perusahaan berdasarkan volume sales terbesar
+        // Fungsi Render List Top 5
         function renderTopCompanies(companyStats) {
             const container = document.getElementById('top5-list');
             container.innerHTML = "";
 
-            // Mengubah objek menjadi array lalu diurutkan berdasarkan nilai sales tertinggi
             let sortedCompanies = Object.keys(companyStats).map(key => {
                 return { name: key, sales: companyStats[key].sales, noa: companyStats[key].noa };
-            }).sort((a, b) => b.sales - a.sales).slice(0, 5); // Ambil peringkat top 5 saja
+            }).sort((a, b) => b.sales - a.sales).slice(0, 5);
 
             if(sortedCompanies.length === 0 || (sortedCompanies.length === 1 && sortedCompanies[0].name === "LAINNYA" && sortedCompanies[0].sales === 0)) {
-                container.innerHTML = `<div style="font-size:11px; color:#aaa; text-align:center; padding:10px 0;">Tidak ada data data perusahaan</div>`;
+                container.innerHTML = `<div style="font-size:11px; color:#aaa; text-align:center; padding:10px 0;">Tidak ada data perusahaan</div>`;
                 return;
             }
 
@@ -328,7 +327,7 @@
                                 🏢 ${geoMapping[code].name}
                             </div>
                             <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
-                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME SALES</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
+                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME DIKELUARKAN</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
                                 <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
                                 <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
                             </div>
