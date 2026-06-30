@@ -131,7 +131,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-  <script>
+ <script>
         const geoMapping = {
             "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
             "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
@@ -175,26 +175,32 @@
             zoomControl: false 
         });
         
-        // Tombol Zoom dikembalikan murni ke pojok kiri bawah tanpa gangguan elemen lain
-        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+        // Poin 1: Posisi tombol zoom dipindah ke kiri bagian tengah layar
+        L.control.zoom({ position: 'topleft' }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
 
         /* =========================================================================
-           INJEKSI OTOMATIS: STYLE & ELEMEN LEGENDA HORIZONTAL MODERN DI BAWAH LAYAR
+           STYLE KOREKSI INTERFACE: RETATA POSISI KOMPONEN REDUNDAN
            ========================================================================= */
         const legendStyle = document.createElement('style');
         legendStyle.innerHTML = `
+            /* Kontrol Zoom di kiri tengah agar tidak mengganggu komponen bawah */
+            .leaflet-top.leaflet-left {
+                top: 50% !important;
+                transform: translateY(-50%);
+            }
+            /* Legenda Horizontal Bersih di Tengah Bawah */
             .bottom-horizontal-legend {
                 position: absolute;
-                bottom: 20px;
+                bottom: 25px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(255, 255, 255, 0.95);
-                padding: 10px 20px;
+                padding: 10px 22px;
                 border-radius: 30px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.12);
                 display: flex;
-                gap: 20px;
+                gap: 18px;
                 align-items: center;
                 z-index: 1000;
                 font-family: sans-serif;
@@ -204,16 +210,26 @@
                 font-weight: bold;
                 color: #333;
                 border-right: 2px solid #ddd;
-                padding-right: 15px;
+                padding-right: 12px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
             }
             .legend-group { display: flex; gap: 15px; }
             .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #555; }
             .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+            
+            /* Poin 2: Sesuaikan posisi tombol reset nasional ke sebelah kiri bawah */
+            #btn-reset {
+                position: absolute !important;
+                bottom: 25px !important;
+                left: 20px !important;
+                z-index: 1010 !important;
+                margin: 0 !important;
+            }
         `;
         document.head.appendChild(legendStyle);
 
+        // Render struktur Legenda Horizontal murni tanpa tabrakan kontrol lain
         const legendDiv = document.createElement('div');
         legendDiv.className = 'bottom-horizontal-legend';
         legendDiv.innerHTML = `
@@ -415,15 +431,15 @@
                     let rankClass = "rank-1"; 
                     if (maxKontribusi > 0) {
                         if (kontribusiNum >= batasHijauTua) {
-                            rankClass = "rank-5";      // Hijau Tua (Makassar)
+                            rankClass = "rank-5";      
                         } else if (kontribusiNum >= batasHijauMuda) {
-                            rankClass = "rank-4"; // Hijau Muda
+                            rankClass = "rank-4"; 
                         } else if (kontribusiNum >= batasKuning) {
-                            rankClass = "rank-3"; // Kuning (Angka 9% - 10%)
+                            rankClass = "rank-3"; 
                         } else if (kontribusiNum >= batasOranye) {
-                            rankClass = "rank-2"; // Oranye (Angka 7%)
+                            rankClass = "rank-2"; 
                         } else {
-                            rankClass = "rank-1"; // Merah (Angka 1% atau di bawahnya)
+                            rankClass = "rank-1"; 
                         }
                     } else {
                         rankClass = "rank-5";
