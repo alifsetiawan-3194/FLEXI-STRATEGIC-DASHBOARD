@@ -212,59 +212,81 @@
             processData();
         }
 
-        function processData() {
-            const m = document.getElementById('filter-month').value;
-            const selectedUker = document.getElementById('filter-uker').value;
-            
-            let totalSales = 0, totalNOA = 0;
-            let mTrend = Array(12).fill(0);
-            let ukerStats = {};
-            let cityStats = {}; 
+        // ... (Bagian inisialisasi Map Leaflet tetap sama) ...
+var markersLayer = L.layerGroup().addTo(map);
 
-            globalTotalSales = rawSales.reduce((acc, d) => acc + parseFloat(d.approved_amount || 0), 0);
+function processData() {
+    const m = document.getElementById('filter-month').value;
+    const selectedUker = document.getElementById('filter-uker').value;
+    
+    let totalSales = 0, totalNOA = 0;
+    let mTrend = Array(12).fill(0);
+    
+    // Bersihkan peta setiap kali filter berubah
+    markersLayer.clearLayers();
 
-            rawSales.forEach(d => {
-                let tgl = d.tanggal_pencairan || "";
-                let month = parseInt(tgl.split('-')[1]);
-                if (m !== 'all' && month != m) return;
+    rawSales.forEach(d => {
+        let tgl = d.tanggal_pencairan || "";
+        let month = parseInt(tgl.split('-')[1]);
+        if (m !== 'all' && month != m) return;
 
-                let loanId = String(d.loan_account_id || "").trim();
-                if (!loanId) return;
-                if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
+        let loanId = String(d.loan_account_id || "").trim();
+        if (!loanId) return;
+        if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
 
-                let code = loanId.substring(0, 4);
-                if (selectedUker !== 'all' && code !== selectedUker) return;
+        let code = loanId.substring(0, 4);
+        if (selectedUker !== 'all' && code !== selectedUker) return;
 
-                let amt = parseFloat(d.approved_amount || 0);
-                totalSales += amt;
-                totalNOA += 1; 
-                if(month) mTrend[month-1] += amt;
+        let amt = parseFloat(d.approved_amount || 0);
+        totalSales += amt;
+        totalNOA += 1; 
+        if(month) mTrend[month-1] += amt;
 
-                if(geoMapping[code]) {
-                    if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
-                    ukerStats[code].os += amt;
-                    ukerStats[code].noa += 1;
-                }
+        // --- OPTIMASI SEBARAN DEBITUR (LOKASI PERUSAHAAN) ---
+        // Pastikan di file CSV/Data kamu ada kolom: lat_perusahaan, lng_perusahaan, nama_perusahaan, dan nama_daerah
+        let latPerusahaan = parseFloat(d.lat_perusahaan);
+        let lngPerusahaan = parseFloat(d.lng_perusahaan);
+        let namaPerusahaan = d.nama_perusahaan || "Perusahaan Tanpa Nama";
+        let namaDaerah = d.nama_daerah || "Daerah Tidak Terdefinisi";
 
-                let sCode = String(d.state_code || "").trim();
-                if(sCode.length === 3) sCode = "0" + sCode; 
-                
-                let cityName = stateDictionary[sCode] || "LAINNYA"; 
-
-                if (cityName !== "LAINNYA") {
-                    let cleanCityKey = cityName.toUpperCase().trim();
-                    cityStats[cleanCityKey] = (cityStats[cleanCityKey] || 0) + amt;
-                }
+        if (latPerusahaan && lngPerusahaan) {
+            // Buat marker kecil (dot) untuk tiap perusahaan agar tidak tumpang tindih
+            const debiturMarker = L.circleMarker([latPerusahaan, lngPerusahaan], {
+                radius: 6,
+                fillColor: "#e74c3c", // Warna merah untuk sebaran debitur
+                color: "#ffffff",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
             });
 
-            document.getElementById('total-os').innerText = formatRupiah(totalSales);
-            document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
-            document.getElementById('loading-overlay').style.display = 'none';
-
-            renderChoropleth(cityStats);
-            renderMapMarkers(ukerStats);
-            renderTrend(mTrend);
+            // Layout Card Detail saat titik debitur/perusahaan diklik
+            const tooltipContent = `
+                <div style="font-family: sans-serif; padding: 3px;">
+                    <strong style="color: #00529c;">📍 ${namaDaerah}</strong><br>
+                    <span style="font-weight: bold; font-size: 12px;">${namaPerusahaan}</span><br>
+                    <small style="color: #555;">Apply Amount: <b>${formatRupiah(amt)}</b></small>
+                </div>
+            `;
+            debiturMarker.bindPopup(tooltipContent);
+            debiturMarker.addTo(markersLayer);
         }
+    });
+
+    // Update Counter Atas/Sidebar
+    document.getElementById('total-os').innerText = formatRupiah(totalSales);
+    document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
+    document.getElementById('loading-overlay').style.display = 'none';
+
+    // Jika user pilih cabang spesifik, arahkan peta ke kumpulan titik debiturnya
+    if (selectedUker !== 'all' && markersLayer.getLayers().length > 0) {
+        // Otomatis menyesuaikan zoom peta agar semua sebaran perusahaan di cabang itu kelihatan pas di layar
+        const group = new L.featureGroup(markersLayer.getLayers());
+        map.fitBounds(group.getBounds().pad(0.1)); 
+    }
+
+    renderTrend(mTrend);
+}
 
         function renderChoropleth(cityData) {
             choroplethLayer.clearLayers();
