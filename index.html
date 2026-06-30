@@ -9,6 +9,11 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
         #map { height: 100vh; width: 100%; position: absolute; z-index: 1; }
         
+        /* Modifikasi Posisi Zoom Control Leaflet ke Tengah Bawah */
+        .leaflet-bottom.leaflet-left { left: 50% !important; transform: translateX(-50%); bottom: 20px; display: flex; gap: 5px; }
+        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; display: flex; flex-direction: row !important; border-radius: 20px !important; overflow: hidden; background: white; }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out { border-bottom: none !important; width: 35px !important; height: 35px !important; line-height: 35px !important; font-size: 16px !important; color: #00529c !important; font-weight: bold; }
+        
         .navbar { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
         .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; display: flex; align-items: center; gap: 5px; }
         .nav-btn.active { background: #00529c; color: white; }
@@ -21,16 +26,22 @@
         
         .filter-container { display: flex; gap: 8px; }
         .filter-box { background: #00529c; padding: 10px; border-radius: 8px; color: white; flex: 1; }
-        .filter-select { width: 100%; padding: 5px; border-radius: 5px; border: none; font-size: 11px; font-weight: bold; margin-top: 4px; }
+        .filter-select { width: 100%; padding: 5px; border-radius: 5px; border: none; font-size: 11px; font-weight: bold; margin-top: 4px; border-right: 4px solid transparent; }
 
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .reset-btn { position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; border: none; display: none; }
+        
+        /* Tombol Kembali ke Nasional Disesuaikan Samping Zoom */
+        .reset-btn { position: absolute; bottom: 20px; left: calc(50% - 140px); z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 11px; cursor: pointer; border: none; display: none; box-shadow: 0 4px 15px rgba(231,76,60,0.3); }
 
-        .custom-pin { width: 14px; height: 14px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); cursor: pointer; position: relative; }
-        .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
+        /* Desain Marker Cabang Glow & Pulse Modern */
         .custom-div-icon { background: transparent !important; border: none !important; }
+        .pulse-marker { width: 16px; height: 16px; background: #00529c; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,82,156,0.6); position: relative; cursor: pointer; }
+        .pulse-marker::after { content: ''; width: 32px; height: 32px; background: rgba(0,82,156,0.25); border-radius: 50%; position: absolute; top: -11px; left: -11px; animation: pulseGlow 1.8s infinite ease-in-out; pointer-events: none; }
+        @keyframes pulseGlow { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+        
+        .pin-label-modern { background: rgba(24, 43, 73, 0.9); color: white; padding: 4px 8px; border-radius: 20px; font-size: 9px; font-weight: bold; white-space: nowrap; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; border: 1px solid rgba(255,255,255,0.15); }
 
         .section-title { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
         .top5-item { display: flex; flex-direction: column; gap: 3px; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 11px; }
@@ -55,7 +66,7 @@
         <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
     </div>
 
-    <button id="btn-reset" class="reset-btn" onclick="resetToNational()">🔄 KEMBALI KE NASIONAL</button>
+    <button id="btn-reset" class="reset-btn" onclick="resetToNational()">🔄 NASIONAL</button>
 
     <div class="sidebar">
         <div class="filter-container">
@@ -131,8 +142,20 @@
             let opt = document.createElement('option'); opt.value = code; opt.innerText = geoMapping[code].name; selectUker.appendChild(opt);
         });
 
+        // Inisialisasi Peta & Atur Posisi Control Zoom di Kiri Bawah/Tengah Bawah bawaan Leaflet
         var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
-        var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0 });
+        var map = L.map('map', { 
+            center: [-2.5489, 118.0149], 
+            zoom: 5, 
+            minZoom: 5, 
+            maxBounds: indonesiaBounds, 
+            maxBoundsViscosity: 1.0,
+            zoomControl: false // Kita matikan default kiri atas
+        });
+        
+        // Buat ulang zoom control dan arahkan ke penampung bottomleft yang sudah kita re-posisi ke tengah bawah via CSS
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
 
         var branchesLayer = L.layerGroup().addTo(map);
@@ -163,19 +186,13 @@
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "";
                 let month = parseInt(tgl.split('-')[1]);
-                if (month >= 1 && month <= 12) {
-                    uniqueMonths.add(month);
-                }
+                if (month >= 1 && month <= 12) uniqueMonths.add(month);
             });
 
             let sortedMonths = Array.from(uniqueMonths).sort((a, b) => a - b);
             const selectMonth = document.getElementById('filter-month');
-
             sortedMonths.forEach(m => {
-                let opt = document.createElement('option');
-                opt.value = m;
-                opt.innerText = monthNames[m - 1];
-                selectMonth.appendChild(opt);
+                let opt = document.createElement('option'); opt.value = m; opt.innerText = monthNames[m - 1]; selectMonth.appendChild(opt);
             });
         }
 
@@ -205,7 +222,6 @@
             let companyStats = {};
 
             debtorsLayer.clearLayers();
-            let currentUkerCoords = [];
 
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
@@ -222,9 +238,7 @@
                 let amt = parseFloat(d.approved_amount || 0);
 
                 if(month) {
-                    if (selectedUker === 'all' || code === selectedUker) {
-                        mTrend[month-1] += amt;
-                    }
+                    if (selectedUker === 'all' || code === selectedUker) mTrend[month-1] += amt;
                 }
 
                 if(geoMapping[code]) {
@@ -235,27 +249,21 @@
                 if (selectedUker !== 'all' && code !== selectedUker) return;
                 totalSales += amt; totalNOA += 1;
 
-                // FIX UTAMA: Membaca property 'company' dari datamu
-                let compName = d.company || d.nama_pt || d.nama_perusahaan || d.perusahaan || "";
+                let compName = d.company || d.nama_pt || d.nama_perusahaan || "";
                 compName = compName ? String(compName).toUpperCase().trim() : "LAINNYA";
 
-                if (!companyStats[compName]) {
-                    companyStats[compName] = { sales: 0, noa: 0 };
-                }
+                if (!companyStats[compName]) companyStats[compName] = { sales: 0, noa: 0 };
                 companyStats[compName].sales += amt;
                 companyStats[compName].noa += 1;
 
                 let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
                 if (latPt && lngPt) {
-                    currentUkerCoords.push([latPt, lngPt]);
-
-                    let displayCompName = d.company || d.nama_pt || d.nama_perusahaan || "Perusahaan";
-                    const PTMarker = L.circleMarker([latPt, lngPt], { radius: 5, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.9, fillOpacity: 0.7 });
+                    let displayCompName = d.company || d.nama_pt || "Perusahaan";
+                    const PTMarker = L.circleMarker([latPt, lngPt], { radius: 4, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.8, fillOpacity: 0.6 });
                     const tooltipPt = `
                         <div style="font-family: sans-serif; padding: 2px; font-size:11px;">
                             <strong style="color: #2980b9;">🏢 ${displayCompName}</strong><br>
-                            <span>Volume: <b>${formatRupiah(amt)}</b></span><br>
-                            <small style="color:#777;">Kota: ${d.kota_pt || "-"}</small>
+                            <span>Volume: <b>${formatRupiah(amt)}</b></span>
                         </div>`;
                     PTMarker.bindPopup(tooltipPt);
                     PTMarker.addTo(debtorsLayer);
@@ -270,17 +278,13 @@
             renderTrend(mTrend);
             renderTopCompanies(companyStats);
 
-            if (selectedUker !== 'all') {
-                if (currentUkerCoords.length > 0) {
-                    const bounds = L.latLngBounds(currentUkerCoords);
-                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 9, animate: true, duration: 1.2 });
-                } else if (geoMapping[selectedUker]) {
-                    map.setView([geoMapping[selectedUker].lat, geoMapping[selectedUker].lng], 9, { animate: true, duration: 1.2 });
-                }
+            // CORRECTION: Autozoom langsung mengacu pada titik koordinat Uker resmi agar presisi & tidak lari jauh
+            if (selectedUker !== 'all' && geoMapping[selectedUker]) {
+                const targetNode = geoMapping[selectedUker];
+                map.setView([targetNode.lat, targetNode.lng], 9, { animate: true, duration: 1.2 });
             }
         }
 
-        // Fungsi Render List Top 5
         function renderTopCompanies(companyStats) {
             const container = document.getElementById('top5-list');
             container.innerHTML = "";
@@ -289,7 +293,7 @@
                 return { name: key, sales: companyStats[key].sales, noa: companyStats[key].noa };
             }).sort((a, b) => b.sales - a.sales).slice(0, 5);
 
-            if(sortedCompanies.length === 0 || (sortedCompanies.length === 1 && sortedCompanies[0].name === "LAINNYA" && sortedCompanies[0].sales === 0)) {
+            if(sortedCompanies.length === 0) {
                 container.innerHTML = `<div style="font-size:11px; color:#aaa; text-align:center; padding:10px 0;">Tidak ada data perusahaan</div>`;
                 return;
             }
@@ -333,11 +337,17 @@
                             </div>
                         </div>`;
 
-                    const pinHTML = `<div class='custom-pin'><span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span></div>`;
-                    const pinIcon = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
+                    // MODIFIKASI: Desain Label Modern Baru dengan Pulse Glow Ring Ringkas
+                    const cleanLabel = geoMapping[code].name.replace("CB ", "");
+                    const modernPinHTML = `
+                        <div class="pulse-marker">
+                            <span class="pin-label-modern">${cleanLabel}</span>
+                        </div>`;
+                        
+                    const pinIcon = L.divIcon({ className: 'custom-div-icon', html: modernPinHTML, iconSize: [16, 16], iconAnchor: [8, 8] });
                     
                     const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], { icon: pinIcon }).addTo(branchesLayer);
-                    marker.bindPopup(branchCardHTML, { offset: L.point(0, -10), closeOnClick: false });
+                    marker.bindPopup(branchCardHTML, { offset: L.point(0, -12), closeOnClick: false });
 
                     if (selectedUker === code) {
                         setTimeout(() => { marker.openPopup(); }, 400);
