@@ -157,149 +157,77 @@
         }
 
         async function initDashboard() {
-            try {
-                document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
-                
-                // CDN DATA GEOJSON ALTERNATIF GLOBAL - ANTI-404 & BERISI DATA KABUPATEN LENGKAP
-                const geoRes = await fetch('https://cdn.jsdelivr.net/gh/renndyS/indonesia-geojson@master/indonesia-kab.json');
-                
-                if (!geoRes.ok) {
-                    throw new Error(`Gagal menghubungi server peta. Status: ${geoRes.status}`);
-                }
-                geojsonData = await geoRes.json();
-                
-                document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
-                
-                let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
-                let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
-
-                const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
-                parsedValidation.forEach(row => {
-                    if(row.state_code && row.nama_provinsi) {
-                        stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
-                    }
-                });
-
-                document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
-                rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
-                
-                processData();
-            } catch (e) { 
-                console.error(e);
-                document.getElementById('loading-overlay').innerHTML = `
-                    <div style="color:#e74c3c; font-weight:bold; text-align:center; padding:20px; font-family:sans-serif;">
-                        ❌ Terjadi kesalahan sinkronisasi data.<br>
-                        <small style="color:#666; font-weight:normal;">Detail: ${e.message}</small>
-                    </div>`;
-            }
+    try {
+        document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Peta...";
+        
+        // Membaca file peta lokal yang barusan kamu upload
+        const geoRes = await fetch('indonesia.json');
+        
+        if (!geoRes.ok) {
+            throw new Error(`Gagal memuat peta lokal. Status: ${geoRes.status}`);
         }
+        geojsonData = await geoRes.json();
+        
+        document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
+        
+        let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
+        let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
 
-        document.getElementById('filter-month').addEventListener('change', processData);
-        document.getElementById('filter-uker').addEventListener('change', function() {
-            const code = this.value;
-            if(code !== 'all' && geoMapping[code]) {
-                map.setView([geoMapping[code].lat, geoMapping[code].lng], 8, { animate: true, duration: 1 });
-                document.getElementById('btn-reset').style.display = 'block';
-            } else if (code === 'all') {
-                resetToNational();
+        const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
+        parsedValidation.forEach(row => {
+            if(row.state_code && row.nama_provinsi) {
+                stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
             }
-            processData();
         });
 
-        function resetToNational() {
-            document.getElementById('filter-uker').value = 'all';
-            map.setView([-2.5489, 118.0149], 5);
-            document.getElementById('btn-reset').style.display = 'none';
-            processData();
-        }
+        document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
+        rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
+        
+        processData();
+    } catch (e) { 
+        console.error(e);
+        document.getElementById('loading-overlay').innerHTML = `
+            <div style="color:#e74c3c; font-weight:bold; text-align:center; padding:20px; font-family:sans-serif;">
+                ❌ Terjadi kesalahan sinkronisasi data.<br>
+                <small style="color:#666; font-weight:normal;">Detail: ${e.message}</small>
+            </div>`;
+    }
+}
 
-        function processData() {
-            const m = document.getElementById('filter-month').value;
-            const selectedUker = document.getElementById('filter-uker').value;
+function renderChoropleth(cityData) {
+    choroplethLayer.clearLayers();
+    if(!geojsonData) return;
+
+    L.geoJson(geojsonData, {
+        style: function(feature) {
+            // MENYESUAIKAN: Membaca nama provinsi dari properti 'id' bawaan file Highcharts tadi
+            let fName = (feature.properties.id || "").toUpperCase().trim();
+
+            // Penyelarasan nama jika ada perbedaan format teks antara data excel vs peta git
+            if(fName === "JAKARTA RAYA") fName = "DKI JAKARTA";
+            if(fName === "YOGYAKARTA") fName = "DI YOGYAKARTA";
+
+            let val = cityData[fName] || 0;
+            return {
+                fillColor: getColor(val),
+                weight: 1, 
+                opacity: 1,
+                color: '#ffffff', 
+                fillOpacity: 0.65
+            };
+        },
+        onEachFeature: function(feature, layer) {
+            let fName = (feature.properties.id || "").toUpperCase().trim();
+            if(fName === "JAKARTA RAYA") fName = "DKI JAKARTA";
+            if(fName === "YOGYAKARTA") fName = "DI YOGYAKARTA";
             
-            let totalSales = 0, totalNOA = 0;
-            let mTrend = Array(12).fill(0);
-            let ukerStats = {};
-            let cityStats = {}; 
-
-            globalTotalSales = rawSales.reduce((acc, d) => acc + parseFloat(d.approved_amount || 0), 0);
-
-            rawSales.forEach(d => {
-                let tgl = d.tanggal_pencairan || "";
-                let month = parseInt(tgl.split('-')[1]);
-                if (m !== 'all' && month != m) return;
-
-                let loanId = String(d.loan_account_id || "").trim();
-                if (!loanId) return;
-                if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
-
-                let code = loanId.substring(0, 4);
-                if (selectedUker !== 'all' && code !== selectedUker) return;
-
-                let amt = parseFloat(d.approved_amount || 0);
-                totalSales += amt;
-                totalNOA += 1; 
-                if(month) mTrend[month-1] += amt;
-
-                if(geoMapping[code]) {
-                    if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
-                    ukerStats[code].os += amt;
-                    ukerStats[code].noa += 1;
-                }
-
-                // PEMETAAN STRATEGIS: Membaca lokasi asli debitur berbasis state_code riil
-                let sCode = String(d.state_code || "").trim();
-                if(sCode.length === 3) sCode = "0" + sCode; 
-                
-                let cityName = stateDictionary[sCode] || "LAINNYA"; 
-
-                if (cityName !== "LAINNYA") {
-                    cityStats[cityName] = (cityStats[cityName] || 0) + amt;
-                }
-            });
-
-            document.getElementById('total-os').innerText = formatRupiah(totalSales);
-            document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
-            document.getElementById('loading-overlay').style.display = 'none';
-
-            renderChoropleth(cityStats);
-            renderMapMarkers(ukerStats);
-            renderTrend(mTrend);
+            let val = cityData[fName] || 0;
+            if(val > 0) {
+                layer.bindPopup(`<b>Provinsi ${fName} (Lokasi Usaha Debitur)</b><br>Volume Penjualan: <b>${formatRupiah(val)}</b>`);
+            }
         }
-
-        function renderChoropleth(cityData) {
-            choroplethLayer.clearLayers();
-            if(!geojsonData) return;
-
-            L.geoJson(geojsonData, {
-                style: function(feature) {
-                    let fName = (feature.properties.NAME_2 || feature.properties.KAB_KOT || "").toUpperCase();
-                    fName = fName.replace("KABUPATEN ", "").replace("KOTA ", "").trim();
-
-                    if(fName === "SOLO") fName = "SURAKARTA";
-
-                    // Mengambil nilai sales riil dari domisili debitur
-                    let val = cityData[fName] || 0;
-                    return {
-                        fillColor: getColor(val),
-                        weight: 1, 
-                        opacity: 1,
-                        color: '#ffffff', 
-                        fillOpacity: 0.65
-                    };
-                },
-                onEachFeature: function(feature, layer) {
-                    let fName = (feature.properties.NAME_2 || feature.properties.KAB_KOT || "").toUpperCase();
-                    fName = fName.replace("KABUPATEN ", "").replace("KOTA ", "").trim();
-                    if(fName === "SOLO") fName = "SURAKARTA";
-                    
-                    let val = cityData[fName] || 0;
-                    if(val > 0) {
-                        layer.bindPopup(`<b>${fName} (Lokasi Usaha Debitur)</b><br>Volume Penjualan: <b>${formatRupiah(val)}</b>`);
-                    }
-                }
-            }).addTo(choroplethLayer);
-        }
+    }).addTo(choroplethLayer);
+}
 
         function renderMapMarkers(stats) {
             markersLayer.clearLayers();
