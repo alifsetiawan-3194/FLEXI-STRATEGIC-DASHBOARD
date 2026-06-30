@@ -32,16 +32,14 @@
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Tombol Kembali ke Nasional Disesuaikan Samping Zoom */
+        /* Tombol Kembali ke Nasional Samping Zoom */
         .reset-btn { position: absolute; bottom: 20px; left: calc(50% - 140px); z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 11px; cursor: pointer; border: none; display: none; box-shadow: 0 4px 15px rgba(231,76,60,0.3); }
 
-        /* Desain Marker Cabang Glow & Pulse Modern */
+        /* Desain Marker Cabang Bulat Glow Tanpa Label Teks */
         .custom-div-icon { background: transparent !important; border: none !important; }
         .pulse-marker { width: 16px; height: 16px; background: #00529c; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,82,156,0.6); position: relative; cursor: pointer; }
         .pulse-marker::after { content: ''; width: 32px; height: 32px; background: rgba(0,82,156,0.25); border-radius: 50%; position: absolute; top: -11px; left: -11px; animation: pulseGlow 1.8s infinite ease-in-out; pointer-events: none; }
         @keyframes pulseGlow { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
-        
-        .pin-label-modern { background: rgba(24, 43, 73, 0.9); color: white; padding: 4px 8px; border-radius: 20px; font-size: 9px; font-weight: bold; white-space: nowrap; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; border: 1px solid rgba(255,255,255,0.15); }
 
         .section-title { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
         .top5-item { display: flex; flex-direction: column; gap: 3px; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 11px; }
@@ -142,7 +140,6 @@
             let opt = document.createElement('option'); opt.value = code; opt.innerText = geoMapping[code].name; selectUker.appendChild(opt);
         });
 
-        // Inisialisasi Peta & Atur Posisi Control Zoom di Kiri Bawah/Tengah Bawah bawaan Leaflet
         var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
         var map = L.map('map', { 
             center: [-2.5489, 118.0149], 
@@ -150,12 +147,10 @@
             minZoom: 5, 
             maxBounds: indonesiaBounds, 
             maxBoundsViscosity: 1.0,
-            zoomControl: false // Kita matikan default kiri atas
+            zoomControl: false 
         });
         
-        // Buat ulang zoom control dan arahkan ke penampung bottomleft yang sudah kita re-posisi ke tengah bawah via CSS
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
-
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
 
         var branchesLayer = L.layerGroup().addTo(map);
@@ -278,7 +273,6 @@
             renderTrend(mTrend);
             renderTopCompanies(companyStats);
 
-            // CORRECTION: Autozoom langsung mengacu pada titik koordinat Uker resmi agar presisi & tidak lari jauh
             if (selectedUker !== 'all' && geoMapping[selectedUker]) {
                 const targetNode = geoMapping[selectedUker];
                 map.setView([targetNode.lat, targetNode.lng], 9, { animate: true, duration: 1.2 });
@@ -337,12 +331,8 @@
                             </div>
                         </div>`;
 
-                    // MODIFIKASI: Desain Label Modern Baru dengan Pulse Glow Ring Ringkas
-                    const cleanLabel = geoMapping[code].name.replace("CB ", "");
-                    const modernPinHTML = `
-                        <div class="pulse-marker">
-                            <span class="pin-label-modern">${cleanLabel}</span>
-                        </div>`;
+                    /* FIX: Label nama cabang permanen dihapus total, menyisakan penanda lingkaran pulse saja */
+                    const modernPinHTML = `<div class="pulse-marker"></div>`;
                         
                     const pinIcon = L.divIcon({ className: 'custom-div-icon', html: modernPinHTML, iconSize: [16, 16], iconAnchor: [8, 8] });
                     
