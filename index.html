@@ -216,91 +216,103 @@
             processData();
         }
 
-        function processData() {
-            const m = document.getElementById('filter-month').value;
-            const selectedUker = document.getElementById('filter-uker').value;
+       function processData() {
+    const m = document.getElementById('filter-month').value;
+    const selectedUker = document.getElementById('filter-uker').value;
+    
+    let totalSales = 0, totalNOA = 0;
+    let mTrend = Array(12).fill(0);
+    let ukerStats = {};
+    let cityStats = {}; // Menampung data kab/kota debitur yang terfilter
+
+    globalTotalSales = rawSales.reduce((acc, d) => acc + parseFloat(d.approved_amount || 0), 0);
+
+    rawSales.forEach(d => {
+        let tgl = d.tanggal_pencairan || "";
+        let month = parseInt(tgl.split('-')[1]);
+        if (m !== 'all' && month != m) return;
+
+        let loanId = String(d.loan_account_id || "").trim();
+        if (!loanId) return;
+        if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
+
+        let code = loanId.substring(0, 4);
+        
+        // KRUSIAL: Jika user memilih cabang tertentu, data debitur dari cabang lain langsung dibuang!
+        if (selectedUker !== 'all' && code !== selectedUker) return;
+
+        let amt = parseFloat(d.approved_amount || 0);
+        totalSales += amt;
+        totalNOA += 1; 
+        if(month) mTrend[month-1] += amt;
+
+        if(geoMapping[code]) {
+            if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
+            ukerStats[code].os += amt;
+            ukerStats[code].noa += 1;
+        }
+
+        // Ambil data state_code domisili debitur
+        let sCode = String(d.state_code || "").trim();
+        if(sCode.length === 3) sCode = "0" + sCode; 
+        
+        let cityName = stateDictionary[sCode] || "LAINNYA"; 
+
+        if (cityName !== "LAINNYA") {
+            // Akumulasikan nominal sales debitur berdasarkan kabupaten/kota asalnya
+            cityStats[cityName] = (cityStats[cityName] || 0) + amt;
+        }
+    });
+
+    document.getElementById('total-os').innerText = formatRupiah(totalSales);
+    document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
+    document.getElementById('loading-overlay').style.display = 'none';
+
+    // Kirim data kabupaten/kota yang sudah bersih terfilter ke peta warna
+    renderChoropleth(cityStats);
+    renderMapMarkers(ukerStats);
+    renderTrend(mTrend);
+}
+
+function renderChoropleth(cityData) {
+    choroplethLayer.clearLayers();
+    if(!geojsonData) return;
+
+    L.geoJson(geojsonData, {
+        style: function(feature) {
+            let fName = (feature.properties.name || "").toUpperCase().trim();
+            let normalName = fName.replace("KABUPATEN ", "KAB. ").replace("KOTA ", "");
+
+            let val = cityData[normalName] || 0;
             
-            let totalSales = 0, totalNOA = 0;
-            let mTrend = Array(12).fill(0);
-            let ukerStats = {};
-            let cityStats = {}; 
-
-            globalTotalSales = rawSales.reduce((acc, d) => acc + parseFloat(d.approved_amount || 0), 0);
-
-            rawSales.forEach(d => {
-                let tgl = d.tanggal_pencairan || "";
-                let month = parseInt(tgl.split('-')[1]);
-                if (m !== 'all' && month != m) return;
-
-                let loanId = String(d.loan_account_id || "").trim();
-                if (!loanId) return;
-                if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
-
-                let code = loanId.substring(0, 4);
-                if (selectedUker !== 'all' && code !== selectedUker) return;
-
-                let amt = parseFloat(d.approved_amount || 0);
-                totalSales += amt;
-                totalNOA += 1; 
-                if(month) mTrend[month-1] += amt;
-
-                if(geoMapping[code]) {
-                    if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
-                    ukerStats[code].os += amt;
-                    ukerStats[code].noa += 1;
-                }
-
-                let sCode = String(d.state_code || "").trim();
-                if(sCode.length === 3) sCode = "0" + sCode; 
-                
-                let cityName = stateDictionary[sCode] || "LAINNYA"; 
-
-                if (cityName !== "LAINNYA") {
-                    cityStats[cityName] = (cityStats[cityName] || 0) + amt;
-                }
-            });
-
-            document.getElementById('total-os').innerText = formatRupiah(totalSales);
-            document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
-            document.getElementById('loading-overlay').style.display = 'none';
-
-            renderChoropleth(cityStats);
-            renderMapMarkers(ukerStats);
-            renderTrend(mTrend);
+            // Konfigurasi warna dinamis
+            return {
+                fillColor: getColor(val),
+                weight: val > 0 ? 1.5 : 0.5, // Tebalkan garis batas jika wilayah tersebut ada debiturnya
+                opacity: 1,
+                color: val > 0 ? '#00529c' : '#ddd', // Garis biru jika ada debitur, abu-abu tipis jika kosong
+                fillOpacity: val > 0 ? 0.75 : 0.02 // Wilayah tanpa debitur dibuat hampir transparan transparan sempurna
+            };
+        },
+        onEachFeature: function(feature, layer) {
+            let fName = (feature.properties.name || "").toUpperCase().trim();
+            let normalName = fName.replace("KABUPATEN ", "KAB. ").replace("KOTA ", "");
+            
+            let val = cityData[normalName] || 0;
+            if(val > 0) {
+                // Beri popup informasi detail sebaran saat wilayah kab/kota diklik
+                layer.bindPopup(`
+                    <div style="font-family:sans-serif; min-width:150px;">
+                        <b style="color:#00529c; font-size:12px;">${fName}</b><br>
+                        <hr style="margin:4px 0; border:0; border-top:1px solid #eee;">
+                        <small style="color:#666;">KONTRIBUSI PORTOPOLIO:</small><br>
+                        <b style="font-size:13px; color:#333;">${formatRupiah(val)}</b>
+                    </div>
+                `);
+            }
         }
-
-        function renderChoropleth(cityData) {
-            choroplethLayer.clearLayers();
-            if(!geojsonData) return;
-
-            L.geoJson(geojsonData, {
-                style: function(feature) {
-                    // GeoJSON kab/kota menyimpan nama di properti 'name' (Contoh: "KOTA BANDUNG", "KABUPATEN BOGOR")
-                    let fName = (feature.properties.name || "").toUpperCase().trim();
-
-                    // Normalisasi beberapa string agar klop dengan data transaksi
-                    fName = fName.replace("KABUPATEN ", "KAB. ").replace("KOTA ", "");
-
-                    let val = cityData[fName] || 0;
-                    return {
-                        fillColor: getColor(val),
-                        weight: 0.8, // Batas wilayah diperhalus karena areanya kecil-kecil
-                        opacity: 1,
-                        color: '#ffffff', 
-                        fillOpacity: 0.7
-                    };
-                },
-                onEachFeature: function(feature, layer) {
-                    let fName = (feature.properties.name || "").toUpperCase().trim();
-                    let normalName = fName.replace("KABUPATEN ", "KAB. ").replace("KOTA ", "");
-                    
-                    let val = cityData[normalName] || 0;
-                    if(val > 0) {
-                        layer.bindPopup(`<b>${fName}</b><br>Volume Penjualan Usaha: <b>${formatRupiah(val)}</b>`);
-                    }
-                }
-            }).addTo(choroplethLayer);
-        }
+    }).addTo(choroplethLayer);
+}
 
         function renderMapMarkers(stats) {
             markersLayer.clearLayers();
