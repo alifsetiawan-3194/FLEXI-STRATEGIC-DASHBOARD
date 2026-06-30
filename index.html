@@ -174,7 +174,7 @@
             } else {
                 resetToNational();
             }
-            processData(); // Pemicu pemrosesan dan autozoom presisi
+            processData();
         });
 
         function resetToNational() {
@@ -190,8 +190,6 @@
             let totalSalesNasional = 0, totalSales = 0, totalNOA = 0, mTrend = Array(12).fill(0), ukerStats = {};
             
             debtorsLayer.clearLayers();
-
-            // Array untuk menampung koordinat sebaran khusus uker terpilih
             let currentUkerCoords = [];
 
             rawSales.forEach(d => {
@@ -224,7 +222,6 @@
 
                 let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
                 if (latPt && lngPt) {
-                    // Masukkan koordinat sebaran data uker yang dipilih ke array penampung
                     currentUkerCoords.push([latPt, lngPt]);
 
                     const PTMarker = L.circleMarker([latPt, lngPt], { radius: 5, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.9, fillOpacity: 0.7 });
@@ -246,14 +243,11 @@
             renderMapLayers(ukerStats, selectedUker, totalSalesNasional);
             renderTrend(mTrend);
 
-            // LOGIKA AUTOZOOM PRESISI BERDASARKAN SEBARAN DEBITUR RIIL
             if (selectedUker !== 'all') {
                 if (currentUkerCoords.length > 0) {
-                    // Zoom pas di tengah-tengah area sebaran seluruh titik PT milik cabang tersebut
                     const bounds = L.latLngBounds(currentUkerCoords);
                     map.fitBounds(bounds, { padding: [50, 50], maxZoom: 9, animate: true, duration: 1.2 });
                 } else if (geoMapping[selectedUker]) {
-                    // Fallback jika belum ada data PT, gunakan posisi default cabang
                     map.setView([geoMapping[selectedUker].lat, geoMapping[selectedUker].lng], 9, { animate: true, duration: 1.2 });
                 }
             }
@@ -264,6 +258,9 @@
             
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
+                    // MODIFIKASI DISINI: Jika user sedang memilih salah satu cabang, lewati (hilangkan) pin cabang lainnya
+                    if (selectedUker !== 'all' && code !== selectedUker) return;
+
                     const dataCabang = stats[code];
                     const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
 
@@ -273,7 +270,7 @@
                                 🏢 ${geoMapping[code].name}
                             </div>
                             <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
-                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME DIKELUARKAN</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
+                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL SALES</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
                                 <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
                                 <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
                             </div>
