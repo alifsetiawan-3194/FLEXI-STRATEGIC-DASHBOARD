@@ -13,13 +13,13 @@
         .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; display: flex; align-items: center; gap: 5px; }
         .nav-btn.active { background: #00529c; color: white; }
         
-        .sidebar { position: absolute; top: 20px; right: 20px; width: 340px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 90vh; overflow-y: auto; }
+        .sidebar { position: absolute; top: 20px; right: 20px; width: 340px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         
-        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #00529c; margin-bottom: 8px; flex: 1; }
+        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #00529c; flex: 1; }
         .stat-card small { color: #888; font-size: 9px; font-weight: bold; text-transform: uppercase; }
-        .stat-card div { font-weight: 800; font-size: 18px; color: #333; margin-top: 1px; }
+        .stat-card div { font-weight: 800; font-size: 16px; color: #333; margin-top: 1px; }
         
-        .filter-container { display: flex; gap: 8px; margin-bottom: 12px; }
+        .filter-container { display: flex; gap: 8px; }
         .filter-box { background: #00529c; padding: 10px; border-radius: 8px; color: white; flex: 1; }
         .filter-select { width: 100%; padding: 5px; border-radius: 5px; border: none; font-size: 11px; font-weight: bold; margin-top: 4px; }
 
@@ -31,6 +31,15 @@
         .custom-pin { width: 14px; height: 14px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); cursor: pointer; position: relative; }
         .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
         .custom-div-icon { background: transparent !important; border: none !important; }
+
+        /* Style Baru Untuk List Top 5 */
+        .section-title { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
+        .top5-item { display: flex; flex-direction: column; gap: 3px; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 11px; }
+        .top5-item:last-child { border-bottom: none; }
+        .top5-row { display: flex; justify-content: space-between; align-items: center; }
+        .top5-name { font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+        .top5-val { font-weight: bold; color: #00529c; }
+        .top5-noa { font-size: 9px; color: #27ae60; background: #ebf7ee; padding: 1px 5px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -65,14 +74,20 @@
             </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom: 10px;">
+        <div style="display:flex; justify-content:space-between; gap:8px;">
             <div class="stat-card"><small>Total Sales Volume</small><div id="total-os">Rp 0</div></div>
             <div class="stat-card" style="border-left-color: #27ae60;"><small>Total NOA</small><div id="total-noa">0</div></div>
         </div>
 
-        <div style="margin-bottom: 12px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
-            <span style="font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px;">Tren Ekspansi Bulanan</span>
-            <div style="height: 160px;"><canvas id="trendChart"></canvas></div>
+        <div style="padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+            <span class="section-title">🏢 Top 5 Perusahaan Terbesar</span>
+            <div id="top5-list" style="display: flex; flex-direction: column;">
+                </div>
+        </div>
+
+        <div style="padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+            <span class="section-title">Tren Ekspansi Bulanan</span>
+            <div style="height: 140px;"><canvas id="trendChart"></canvas></div>
         </div>
     </div>
 
@@ -189,6 +204,9 @@
             const selectedUker = document.getElementById('filter-uker').value;
             let totalSalesNasional = 0, totalSales = 0, totalNOA = 0, mTrend = Array(12).fill(0), ukerStats = {};
             
+            // Object penampung data agregat per PT
+            let companyStats = {};
+
             debtorsLayer.clearLayers();
             let currentUkerCoords = [];
 
@@ -220,6 +238,14 @@
                 if (selectedUker !== 'all' && code !== selectedUker) return;
                 totalSales += amt; totalNOA += 1;
 
+                // Hitung agregat per Perusahaan (PT)
+                let compName = d.nama_pt ? d.nama_pt.toUpperCase().trim() : "LAINNYA";
+                if (!companyStats[compName]) {
+                    companyStats[compName] = { sales: 0, noa: 0 };
+                }
+                companyStats[compName].sales += amt;
+                companyStats[compName].noa += 1;
+
                 let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
                 if (latPt && lngPt) {
                     currentUkerCoords.push([latPt, lngPt]);
@@ -242,6 +268,7 @@
 
             renderMapLayers(ukerStats, selectedUker, totalSalesNasional);
             renderTrend(mTrend);
+            renderTopCompanies(companyStats); // Panggil fungsi render list Top 5
 
             if (selectedUker !== 'all') {
                 if (currentUkerCoords.length > 0) {
@@ -253,12 +280,43 @@
             }
         }
 
+        // FUNGSI BARU: Merender Top 5 Perusahaan berdasarkan volume sales terbesar
+        function renderTopCompanies(companyStats) {
+            const container = document.getElementById('top5-list');
+            container.innerHTML = "";
+
+            // Mengubah objek menjadi array lalu diurutkan berdasarkan nilai sales tertinggi
+            let sortedCompanies = Object.keys(companyStats).map(key => {
+                return { name: key, sales: companyStats[key].sales, noa: companyStats[key].noa };
+            }).sort((a, b) => b.sales - a.sales).slice(0, 5); // Ambil peringkat top 5 saja
+
+            if(sortedCompanies.length === 0 || (sortedCompanies.length === 1 && sortedCompanies[0].name === "LAINNYA" && sortedCompanies[0].sales === 0)) {
+                container.innerHTML = `<div style="font-size:11px; color:#aaa; text-align:center; padding:10px 0;">Tidak ada data data perusahaan</div>`;
+                return;
+            }
+
+            sortedCompanies.forEach(comp => {
+                let item = document.createElement('div');
+                item.className = 'top5-item';
+                item.innerHTML = `
+                    <div class="top5-row">
+                        <span class="top5-name" title="${comp.name}">🏢 ${comp.name}</span>
+                        <span class="top5-val">${formatRupiah(comp.sales)}</span>
+                    </div>
+                    <div class="top5-row" style="margin-top: 1px;">
+                        <span style="font-size:9px; color:#aaa;">Pencairan Riil</span>
+                        <span class="top5-noa">${comp.noa} NOA</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
         function renderMapLayers(stats, selectedUker, totalSalesNasional) {
             branchesLayer.clearLayers(); 
             
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
-                    // MODIFIKASI DISINI: Jika user sedang memilih salah satu cabang, lewati (hilangkan) pin cabang lainnya
                     if (selectedUker !== 'all' && code !== selectedUker) return;
 
                     const dataCabang = stats[code];
@@ -270,7 +328,7 @@
                                 🏢 ${geoMapping[code].name}
                             </div>
                             <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
-                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL SALES</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
+                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME SALES</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
                                 <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
                                 <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
                             </div>
