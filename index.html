@@ -352,61 +352,70 @@
         }
 
         function renderMapLayers(stats, selectedUker, totalSalesNasional) {
-            branchesLayer.clearLayers(); 
+    branchesLayer.clearLayers(); 
+    
+    // 1. Ambil semua uker yang memiliki data sales dan masukkan ke dalam array
+    let ukerList = Object.keys(stats)
+        .filter(code => geoMapping[code])
+        .map(code => {
+            return { code: code, os: stats[code].os };
+        });
+
+    // 2. Urutkan dari nilai sales TERKECIL ke TERBESAR
+    ukerList.sort((a, b) => a.os - b.os);
+    
+    let totalUker = ukerList.length;
+
+    // 3. Masukkan kembali ke dalam object peta dengan penentuan warna berdasarkan peringkat (Kuantil)
+    Object.keys(stats).forEach(code => {
+        if(geoMapping[code]) {
+            if (selectedUker !== 'all' && code !== selectedUker) return;
+
+            const dataCabang = stats[code];
+            const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
+
+            // Cari posisi peringkat uker ini (index 0 sampai totalUker - 1)
+            let ukerIndex = ukerList.findIndex(item => item.code === code);
             
-            // --- LOGIKA GRADASI WARNA DINAMIS (MIN-MAX) ---
-            let values = Object.keys(stats).map(code => stats[code].os);
-            let minVal = Math.min(...values);
-            let maxVal = Math.max(...values);
-            let range = maxVal - minVal;
-            let interval = range / 5;
+            // Tentukan warna berdasarkan posisi persentil populasi uker
+            let rankClass = "rank-1"; 
+            if (totalUker > 1) {
+                let percentile = ukerIndex / (totalUker - 1); // Hasilnya 0.0 sampai 1.0
+                
+                if (percentile >= 0.8) rankClass = "rank-5";      // 20% Uker Tertinggi (Pasti Hijau Tua termasuk Makassar)
+                else if (percentile >= 0.6) rankClass = "rank-4"; // 20% Uker Tinggi (Hijau Muda)
+                else if (percentile >= 0.4) rankClass = "rank-3"; // 20% Uker Cukup (Kuning)
+                else if (percentile >= 0.2) rankClass = "rank-2"; // 20% Uker Rendah (Oranye)
+                else rankClass = "rank-1";                           // 20% Uker Terendah (Merah)
+            } else {
+                rankClass = "rank-5";
+            }
 
-            Object.keys(stats).forEach(code => {
-                if(geoMapping[code]) {
-                    if (selectedUker !== 'all' && code !== selectedUker) return;
+            const branchCardHTML = `
+                <div style="font-family: sans-serif; width: 230px; margin:-5px;">
+                    <div style="background: #00529c; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
+                        🏢 ${geoMapping[code].name}
+                    </div>
+                    <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
+                        <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME DIKELUARKAN</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
+                        <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
+                        <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
+                    </div>
+                </div>`;
 
-                    const dataCabang = stats[code];
-                    const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
+            const modernPinHTML = `<div class="pulse-marker ${rankClass}"></div>`;
+                
+            const pinIcon = L.divIcon({ className: 'custom-div-icon', html: modernPinHTML, iconSize: [16, 16], iconAnchor: [8, 8] });
+            
+            const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], { icon: pinIcon }).addTo(branchesLayer);
+            marker.bindPopup(branchCardHTML, { offset: L.point(0, -12), closeOnClick: false });
 
-                    // Tentukan kelas rank (1 s.d 5) secara dinamis berdasarkan porsi interval data
-                    let rankClass = "rank-1"; 
-                    if (range > 0) {
-                        let diff = dataCabang.os - minVal;
-                        if (diff >= interval * 4) rankClass = "rank-5";      // Hijau Tua
-                        else if (diff >= interval * 3) rankClass = "rank-4"; // Hijau Muda
-                        else if (diff >= interval * 2) rankClass = "rank-3"; // Kuning
-                        else if (diff >= interval * 1) rankClass = "rank-2"; // Oranye
-                        else rankClass = "rank-1";                           // Merah
-                    } else {
-                        rankClass = "rank-5"; // Jika data sama semua, default hijau tua
-                    }
-
-                    const branchCardHTML = `
-                        <div style="font-family: sans-serif; width: 230px; margin:-5px;">
-                            <div style="background: #00529c; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
-                                🏢 ${geoMapping[code].name}
-                            </div>
-                            <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
-                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME DIKELUARKAN</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
-                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
-                                <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
-                            </div>
-                        </div>`;
-
-                    // Menyisipkan rankClass hasil perhitungan dinamis ke elemen pin
-                    const modernPinHTML = `<div class="pulse-marker ${rankClass}"></div>`;
-                        
-                    const pinIcon = L.divIcon({ className: 'custom-div-icon', html: modernPinHTML, iconSize: [16, 16], iconAnchor: [8, 8] });
-                    
-                    const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], { icon: pinIcon }).addTo(branchesLayer);
-                    marker.bindPopup(branchCardHTML, { offset: L.point(0, -12), closeOnClick: false });
-
-                    if (selectedUker === code) {
-                        setTimeout(() => { marker.openPopup(); }, 400);
-                    }
-                }
-            });
+            if (selectedUker === code) {
+                setTimeout(() => { marker.openPopup(); }, 400);
+            }
         }
+    });
+}
 
         function renderTrend(data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
