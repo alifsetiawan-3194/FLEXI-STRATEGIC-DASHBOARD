@@ -3,62 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Real Client Distribution (Kabupaten/Kota)</title>
+    <title>Flexi Strategic Board - Real Market Penetration</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
-        .navbar { position: absolute; top: 15px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
-        .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; color: #555; border: 1px solid #ddd; }
-        .nav-btn.active { background: #00529c; color: white; border-color: #00529c; }
-        #map { height: 100vh; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
+        #map { height: 100vh; width: 100%; position: absolute; z-index: 1; }
         
-        .sidebar { position: absolute; top: 80px; right: 20px; width: 360px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 85vh; overflow-y: auto; }
-        .filter-container { display: flex; gap: 8px; margin-bottom: 15px; }
+        /* Layout Card Interaktif Sidebar */
+        .sidebar { position: absolute; top: 80px; right: 20px; width: 340px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 85vh; overflow-y: auto; }
+        .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; }
+        .nav-btn.active { background: #00529c; color: white; }
+        
+        /* Stats Card Styling */
+        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #00529c; margin-bottom: 8px; flex:1;}
+        .stat-card small { color: #888; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+        .stat-card div { font-weight: 800; font-size: 18px; color: #333; margin-top: 1px; }
+        
+        /* Filter Control Styling */
+        .filter-container { display: flex; gap: 8px; margin-bottom: 12px; }
         .filter-box { background: #00529c; padding: 10px; border-radius: 8px; color: white; flex: 1; }
-        .filter-select { width: 100%; padding: 6px; border-radius: 5px; border: none; margin-top: 5px; font-weight: bold; color: #333; font-size: 11px; }
-        
-        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #00529c; }
-        .stat-card small { color: #666; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .stat-card div { font-weight: bold; font-size: 18px; color: #333; margin-top: 2px; }
-        
-        .chart-container { margin-bottom: 15px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee; }
-        .chart-label { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
-        
-        .reset-btn { position: absolute; bottom: 30px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border: none; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; transition: 0.2s; }
-        .reset-btn:hover { background: #c0392b; }
+        .filter-select { width: 100%; padding: 5px; border-radius: 5px; border: none; font-size: 11px; font-weight: bold; margin-top: 4px; }
 
+        /* Loading & Reset */
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+        .reset-btn { position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; border:none; display:none; }
+
+        /* Kustom Marker Cabang & Debitur */
+        .custom-pin { width: 16px; height: 16px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); cursor: pointer; position: relative;}
+        .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.3); pointer-events: none; }
         .custom-div-icon { background: transparent !important; border: none !important; }
-        .custom-pin { width: 12px; height: 12px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; cursor: pointer; }
-        .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -24px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.3); pointer-events: none; z-index: 99999; }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Batas Wilayah Kota & Kabupaten...</div>
+        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Menyinkronkan Real Data Spasial...</div>
     </div>
 
-    <div class="navbar">
-        <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
-        <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
-    </div>
+    <div id="map"></div>
 
     <button id="btn-reset" class="reset-btn" onclick="resetToNational()">🔄 KEMBALI KE NASIONAL</button>
 
     <div class="sidebar">
+        <div class="navbar" style="position:static; margin-bottom:12px; gap:8px;">
+            <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
+            <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
+        </div>
+
         <div class="filter-container">
             <div class="filter-box">
                 <span style="font-size: 10px; font-weight: bold;">BULAN</span>
                 <select id="filter-month" class="filter-select">
                     <option value="all">Semua Bulan</option>
                     <option value="1">Januari</option><option value="2">Februari</option>
-                    <option value="3">Maret</option><option value="4">April</option>
-                    <option value="5">Mei</option><option value="6">Juni</option>
                 </select>
             </div>
             <div class="filter-box">
@@ -69,28 +69,27 @@
             </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom: 8px;">
-            <div class="stat-card" style="flex:1;"><small>Total Sales Volume</small><div id="total-os">Rp 0</div></div>
-            <div class="stat-card" style="flex:1; border-left-color: #27ae60;"><small>Total NOA</small><div id="total-noa">0</div></div>
+        <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom: 10px;">
+            <div class="stat-card"><small>Total Sales Volume</small><div id="total-os">Rp 0</div></div>
+            <div class="stat-card" style="border-left-color: #27ae60;"><small>Total NOA</small><div id="total-noa">0</div></div>
         </div>
 
-        <div class="chart-container">
-            <span class="chart-label">Tren Ekspansi Bulanan</span>
+        <div style="margin-bottom: 12px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+            <span style="font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px;">Tren Ekspansi Bulanan</span>
             <div style="height: 160px;"><canvas id="trendChart"></canvas></div>
         </div>
     </div>
 
-    <div id="map"></div>
-
     <script src="mapping_state.js"></script>
     <script src="data_pencairan_2026.js"></script>
-
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
+        // Data Spasial KOORDINAT ASLI Kantor Cabang (Ini Label Pin yang sempet ilang)
         const geoMapping = {
             "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
             "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
@@ -119,24 +118,17 @@
 
         const selectUker = document.getElementById('filter-uker');
         Object.keys(geoMapping).forEach(code => {
-            let opt = document.createElement('option');
-            opt.value = code;
-            opt.innerText = geoMapping[code].name;
-            selectUker.appendChild(opt);
+            let opt = document.createElement('option'); opt.value = code; opt.innerText = geoMapping[code].name; selectUker.appendChild(opt);
         });
 
         var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
-        var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0 });
+        var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0, closePopupOnClick: false });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
-        
-        var choroplethLayer = L.layerGroup().addTo(map); 
-        var markersLayer = L.layerGroup().addTo(map);
-        
-        let trendChart = null;
-        let rawSales = [];
-        let geojsonData = null; 
-        let stateDictionary = {}; 
-        let globalTotalSales = 0; 
+
+        // Layer Spasial (1 untuk Kantor Cabang, 1 untuk Debitur)
+        var branchesLayer = L.layerGroup().addTo(map);
+        var debtorsLayer = L.layerGroup().addTo(map);
+        let rawSales = [], trendChart = null;
 
         function formatRupiah(val) {
             if (!val) return "Rp 0";
@@ -146,50 +138,13 @@
             return "Rp " + Math.round(val).toLocaleString('id-ID');
         }
 
-        // Skala warna sensitif (Mulai puluhan juta hingga miliaran agar kelihatan pekat)
-        function getColor(v) {
-            return v > 1e9    ? '#08306b' :  
-                   v > 500e6  ? '#08519c' :  
-                   v > 200e6  ? '#2171b5' :  
-                   v > 50e6   ? '#4292c6' :  
-                   v > 5e6    ? '#9ecae1' :  
-                   v > 0      ? '#deebf7' : 'rgba(0,0,0,0.02)';
-        }
-
         async function initDashboard() {
             try {
-                document.getElementById('loading-text').innerText = "Memuat Batas Administrasi Kab/Kota Lokal...";
-                const geoRes = await fetch('./indonesia-kab.json');
-                
-                if (!geoRes.ok) {
-                    throw new Error(`Gagal memuat peta kota dari server. Status: ${geoRes.status}`);
-                }
-                geojsonData = await geoRes.json();
-                
-                document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
-                
-                let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
                 let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
-
-                const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
-                parsedValidation.forEach(row => {
-                    if(row.state_code && (row.nama_kabupaten || row.nama_kota || row.nama_provinsi)) {
-                        let nameValue = row.nama_kabupaten || row.nama_kota || row.nama_provinsi;
-                        stateDictionary[String(row.state_code).trim()] = nameValue.toUpperCase().trim();
-                    }
-                });
-
-                document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
                 rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
-                
                 processData();
             } catch (e) { 
-                console.error(e);
-                document.getElementById('loading-overlay').innerHTML = `
-                    <div style="color:#e74c3c; font-weight:bold; text-align:center; padding:20px; font-family:sans-serif;">
-                        ❌ Terjadi kesalahan sinkronisasi data peta kota.<br>
-                        <small style="color:#666; font-weight:normal;">Detail: ${e.message}</small>
-                    </div>`;
+                document.getElementById('loading-overlay').innerHTML = `<div style="color:#e74c3c;">❌ Eror Sinkronisasi Data Internal.</div>`;
             }
         }
 
@@ -197,7 +152,6 @@
         document.getElementById('filter-uker').addEventListener('change', function() {
             const code = this.value;
             if(code !== 'all' && geoMapping[code]) {
-                map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1 }); 
                 document.getElementById('btn-reset').style.display = 'block';
             } else if (code === 'all') {
                 resetToNational();
@@ -212,201 +166,96 @@
             processData();
         }
 
-        // ... (Bagian inisialisasi Map Leaflet tetap sama) ...
-var markersLayer = L.layerGroup().addTo(map);
+        function processData() {
+            const m = document.getElementById('filter-month').value;
+            const selectedUker = document.getElementById('filter-uker').value;
+            let totalSales = 0, totalNOA = 0, mTrend = Array(12).fill(0), ukerStats = {};
+            
+            // Bersihkan data spasial perusahaan lama
+            debtorsLayer.clearLayers();
 
-function processData() {
-    const m = document.getElementById('filter-month').value;
-    const selectedUker = document.getElementById('filter-uker').value;
-    
-    let totalSales = 0, totalNOA = 0;
-    let mTrend = Array(12).fill(0);
-    
-    // Bersihkan peta setiap kali filter berubah
-    markersLayer.clearLayers();
+            rawSales.forEach(d => {
+                let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
+                if (m !== 'all' && month != m) return;
+                let loanId = String(d.loan_account_id || "").padStart(15, "0");
+                let code = loanId.substring(0, 4);
+                if (selectedUker !== 'all' && code !== selectedUker) return;
 
-    rawSales.forEach(d => {
-        let tgl = d.tanggal_pencairan || "";
-        let month = parseInt(tgl.split('-')[1]);
-        if (m !== 'all' && month != m) return;
+                let amt = parseFloat(d.approved_amount || 0);
+                totalSales += amt; totalNOA += 1; 
+                if(month) mTrend[month-1] += amt;
+                if(geoMapping[code]) {
+                    if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
+                    ukerStats[code].os += amt; ukerStats[code].noa += 1;
+                }
 
-        let loanId = String(d.loan_account_id || "").trim();
-        if (!loanId) return;
-        if (loanId.length < 15 && !loanId.startsWith("0")) loanId = loanId.padStart(15, "0");
+                // --- CORE FEATURE GOAL: SPASIAL PERUSAHAAN (Lokasi Riil PT/CV) ---
+                // Data ini harus ada di file CSV kamu (Kolom: lat_pt, lng_pt, nama_pt, nama_uker_pt, kota_pt)
+                let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
+                let namaPt = d.nama_pt || "Perusahaan Anonim";
+                let amountPt = formatRupiah(amt);
+                let lokasiPt = (d.kota_pt || "Lokasi") + " - " + (d.nama_uker_pt || "Uker");
 
-        let code = loanId.substring(0, 4);
-        if (selectedUker !== 'all' && code !== selectedUker) return;
-
-        let amt = parseFloat(d.approved_amount || 0);
-        totalSales += amt;
-        totalNOA += 1; 
-        if(month) mTrend[month-1] += amt;
-
-        // --- OPTIMASI SEBARAN DEBITUR (LOKASI PERUSAHAAN) ---
-        // Pastikan di file CSV/Data kamu ada kolom: lat_perusahaan, lng_perusahaan, nama_perusahaan, dan nama_daerah
-        let latPerusahaan = parseFloat(d.lat_perusahaan);
-        let lngPerusahaan = parseFloat(d.lng_perusahaan);
-        let namaPerusahaan = d.nama_perusahaan || "Perusahaan Tanpa Nama";
-        let namaDaerah = d.nama_daerah || "Daerah Tidak Terdefinisi";
-
-        if (latPerusahaan && lngPerusahaan) {
-            // Buat marker kecil (dot) untuk tiap perusahaan agar tidak tumpang tindih
-            const debiturMarker = L.circleMarker([latPerusahaan, lngPerusahaan], {
-                radius: 6,
-                fillColor: "#e74c3c", // Warna merah untuk sebaran debitur
-                color: "#ffffff",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
+                if (latPt && lngPt) {
+                    // Buat Dot density kecil warna merah untuk perusahaan agar performa ringan
+                    const PTMarker = L.circleMarker([latPt, lngPt], { radius: 6, fillColor: "#e74c3c", color: "#fff", weight: 1, opacity: 1, fillOpacity: 0.8 });
+                    
+                    const tooltipPt = `
+                        <div style="font-family: sans-serif; padding: 2px;">
+                            <strong style="color: #00529c; font-size:12px;">📍 ${namaPt}</strong><br>
+                            <small style="color:#555;">Apply Amount: <b>${amountPt}</b></small><br>
+                            <small style="color:#888;">${lokasiPt}</small>
+                        </div>
+                    `;
+                    PTMarker.bindPopup(tooltipPt);
+                    PTMarker.addTo(debtorsLayer);
+                }
             });
 
-            // Layout Card Detail saat titik debitur/perusahaan diklik
-            const tooltipContent = `
-                <div style="font-family: sans-serif; padding: 3px;">
-                    <strong style="color: #00529c;">📍 ${namaDaerah}</strong><br>
-                    <span style="font-weight: bold; font-size: 12px;">${namaPerusahaan}</span><br>
-                    <small style="color: #555;">Apply Amount: <b>${formatRupiah(amt)}</b></small>
-                </div>
-            `;
-            debiturMarker.bindPopup(tooltipContent);
-            debiturMarker.addTo(markersLayer);
-        }
-    });
+            // Update Angka di Sidebar
+            document.getElementById('total-os').innerText = formatRupiah(totalSales);
+            document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
+            document.getElementById('loading-overlay').style.display = 'none';
 
-    // Update Counter Atas/Sidebar
-    document.getElementById('total-os').innerText = formatRupiah(totalSales);
-    document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
-    document.getElementById('loading-overlay').style.display = 'none';
-
-    // Jika user pilih cabang spesifik, arahkan peta ke kumpulan titik debiturnya
-    if (selectedUker !== 'all' && markersLayer.getLayers().length > 0) {
-        // Otomatis menyesuaikan zoom peta agar semua sebaran perusahaan di cabang itu kelihatan pas di layar
-        const group = new L.featureGroup(markersLayer.getLayers());
-        map.fitBounds(group.getBounds().pad(0.1)); 
-    }
-
-    renderTrend(mTrend);
-}
-
-        function renderChoropleth(cityData) {
-            choroplethLayer.clearLayers();
-            if(!geojsonData) return;
-
-            L.geoJson(geojsonData, {
-                style: function(feature) {
-                    let geoName = (feature.properties.name || "").toUpperCase().trim();
-                    let geoCleaned = geoName.replace("KABUPATEN ", "").replace("KOTA ", "").replace("KAB. ", "").trim();
-
-                    let val = 0;
-                    Object.keys(cityData).forEach(dbName => {
-                        let dbCleaned = dbName.replace("KABUPATEN ", "").replace("KOTA ", "").replace("KAB. ", "").trim();
-                        if (geoCleaned === dbCleaned || geoName.includes(dbCleaned) || dbName.includes(geoCleaned)) {
-                            val = cityData[dbName];
-                        }
-                    });
-
-                    return {
-                        fillColor: getColor(val),
-                        weight: val > 0 ? 2 : 0.5,           
-                        opacity: 1,
-                        color: val > 0 ? '#ffffff' : '#e0e0e0', 
-                        fillOpacity: val > 0 ? 1 : 0.02       
-                    };
-                },
-                onEachFeature: function(feature, layer) {
-                    let geoName = (feature.properties.name || "").toUpperCase().trim();
-                    let geoCleaned = geoName.replace("KABUPATEN ", "").replace("KOTA ", "").replace("KAB. ", "").trim();
-                    
-                    let val = 0;
-                    Object.keys(cityData).forEach(dbName => {
-                        let dbCleaned = dbName.replace("KABUPATEN ", "").replace("KOTA ", "").replace("KAB. ", "").trim();
-                        if (geoCleaned === dbCleaned || geoName.includes(dbCleaned) || dbName.includes(geoCleaned)) {
-                            val = cityData[dbName];
-                        }
-                    });
-
-                    if(val > 0) {
-                        layer.bindPopup(`
-                            <div style="font-family:sans-serif; min-width:150px;">
-                                <b style="color:#00529c; font-size:12px;">${geoName}</b><br>
-                                <hr style="margin:4px 0; border:0; border-top:1px solid #eee;">
-                                <small style="color:#666;">VOLUME PORTOFOLIO:</small><br>
-                                <b style="font-size:13px; color:#333;">${formatRupiah(val)}</b>
-                            </div>
-                        `);
-                    }
-                }
-            }).addTo(choroplethLayer);
+            // Gambar ulang Label Cabang & Sebaran Debitur Riil
+            renderMapLayers(ukerStats, selectedUker);
+            renderTrend(mTrend);
         }
 
-        function renderMapMarkers(stats) {
-            markersLayer.clearLayers();
+        function renderMapLayers(stats, selectedUker) {
+            branchesLayer.clearLayers(); 
+            // Tetap Munculkan Kantor Cabang Pusatnya (Label Pin Merah Gede)
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
-                    const pinHTML = `
-                        <div class='custom-pin'>
-                            <span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span>
-                        </div>`;
-                    
-                    const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
-                    const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], {icon: pin}).addTo(markersLayer);
-                    
-                    let kontribusi = globalTotalSales > 0 ? ((stats[code].os / globalTotalSales) * 100).toFixed(1) : 0;
-                    
-                    marker.bindPopup(`
-                        <div style="font-family:sans-serif; min-width:160px;">
-                            <b style="color:#e74c3c; font-size:13px;">${geoMapping[code].name} [Pusat Uker]</b><br>
-                            <hr style="margin:4px 0; border:0; border-top:1px solid #ddd;">
-                            <small style="color:#666;">VOLUME DIKELUARKAN:</small><br>
-                            <b style="font-size:14px; color:#333;">${formatRupiah(stats[code].os)}</b><br>
-                            <small style="color:#27ae60;"><b>Kontribusi: ${kontribusi}%</b> vs Nasional</small>
-                        </div>
-                    `);
+                    const pinHTML = `<div class='custom-pin'><span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span></div>`;
+                    const pinIcon = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
+                    L.marker([geoMapping[code].lat, geoMapping[code].lng], { icon: pinIcon }).addTo(branchesLayer);
                 }
             });
+
+            // Goal Tercapai: Zooming Spasial menyesuaikan sebaran PT (bukan zoom ke koordinat cabang doang)
+            if (selectedUker !== 'all' && debtorsLayer.getLayers().length > 0) {
+                // Feature fitBounds ini bikin peta auto-zoom ke sekumpulan titik PT yang apply
+                const ptBounds = L.featureGroup(debtorsLayer.getLayers()).getBounds();
+                map.fitBounds(ptBounds, { animate:true, duration: 1, padding: [20, 20] });
+            }
         }
 
         function renderTrend(data) {
+            // (Fungsi renderTrend Chart.js di bagian bawah ini dipertahankan tetap sama)
             const ctx = document.getElementById('trendChart').getContext('2d');
             if(trendChart) trendChart.destroy();
-            
             trendChart = new Chart(ctx, {
-                type: 'line',
-                plugins: [ChartDataLabels],
-                data: {
-                    labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
-                    datasets: [{ 
-                        data: data.map(v => v/1e9), 
-                        borderColor: '#00529c', 
-                        tension: 0.2, 
-                        fill: true, 
-                        backgroundColor: 'rgba(0,82,156,0.05)',
-                        pointBackgroundColor: '#00529c',
-                        pointRadius: 4
-                    }]
+                type: 'line', plugins: [ChartDataLabels],
+                data: { labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                    datasets: [{ data: data.map(v => v/1e9), borderColor: '#00529c', tension: 0.2, fill: true, backgroundColor: 'rgba(0,82,156,0.05)', pointBackgroundColor: '#00529c', pointRadius: 4 }]
                 },
-                options: { 
-                    maintainAspectRatio: false, 
-                    layout: { padding: { left: 18, right: 18, top: 24, bottom: 5 } },
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: {
-                            align: 'top',
-                            anchor: 'end',
-                            offset: 6,
-                            color: '#333',
-                            font: { size: 10, weight: 'bold' },
-                            formatter: function(value) { return value > 0 ? value.toFixed(1) + 'M' : ''; }
-                        }
-                    }, 
-                    scales: { 
-                        y: { display: false, grid: { display: false } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#666' } }
-                    } 
+                options: { maintainAspectRatio: false, layout: { padding: { left: 18, right: 18, top: 24, bottom: 5 } },
+                    plugins: { legend: { display: false }, datalabels: { align: 'top', anchor: 'end', offset: 6, color: '#333', font: { size: 10, weight: 'bold' }, formatter: (value) => value > 0 ? value.toFixed(1) + 'M' : '' } },
+                    scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#666' } } }
                 }
             });
         }
-
         initDashboard();
     </script>
 </body>
