@@ -158,10 +158,10 @@
 
         async function initDashboard() {
             try {
-                document.getElementById('loading-text').innerText = "Memuat Batas Administrasi Kab/Kota (Dikompres)...";
-                
-                // MENGGUNAKAN GEOJSON KOTA/KABUPATEN YANG RINGAN & CEPAT DI-LOAD (HANYA ~3MB)
-                const geoRes = await fetch('https://cdn.jsdelivr.net/gh/willyvangi/indonesia-geojson@master/indonesia-regencies-id.json');
+                    document.getElementById('loading-text').innerText = "Memuat Batas Administrasi Kab/Kota Lokal...";
+
+                    // SEKARANG MENGARAH KE FILE LOKAL KAMU:
+                    const geoRes = await fetch('./indonesia-kab.json');
                 
                 if (!geoRes.ok) {
                     throw new Error(`Gagal memuat peta kota dari server. Status: ${geoRes.status}`);
