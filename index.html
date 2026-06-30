@@ -35,10 +35,36 @@
         /* Tombol Kembali ke Nasional Samping Zoom */
         .reset-btn { position: absolute; bottom: 20px; left: calc(50% - 140px); z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 11px; cursor: pointer; border: none; display: none; box-shadow: 0 4px 15px rgba(231,76,60,0.3); }
 
-        /* Desain Marker Cabang Bulat Glow Tanpa Label Teks */
+        /* --- DESAIN MARKER CABANG BERAGAM WARNA (GRADASI DINAMIS) --- */
         .custom-div-icon { background: transparent !important; border: none !important; }
-        .pulse-marker { width: 16px; height: 16px; background: #00529c; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,82,156,0.6); position: relative; cursor: pointer; }
-        .pulse-marker::after { content: ''; width: 32px; height: 32px; background: rgba(0,82,156,0.25); border-radius: 50%; position: absolute; top: -11px; left: -11px; animation: pulseGlow 1.8s infinite ease-in-out; pointer-events: none; }
+        .pulse-marker { width: 16px; height: 16px; border: 3px solid #fff; border-radius: 50%; position: relative; cursor: pointer; }
+        .pulse-marker::after { content: ''; width: 32px; height: 32px; border-radius: 50%; position: absolute; top: -11px; left: -11px; animation: pulseGlow 1.8s infinite ease-in-out; pointer-events: none; }
+        
+        /* 1. Merah (Sangat Rendah) */
+        .pulse-marker.rank-1 { background: #e74c3c; box-shadow: 0 0 12px rgba(231,76,60,0.8); }
+        .pulse-marker.rank-1::after { background: rgba(231,76,60,0.3); }
+
+        /* 2. Oranye (Rendah) */
+        .pulse-marker.rank-2 { background: #e67e22; box-shadow: 0 0 12px rgba(230,126,34,0.8); }
+        .pulse-marker.rank-2::after { background: rgba(230,126,34,0.3); }
+
+        /* 3. Kuning (Cukup) */
+        .pulse-marker.rank-3 { background: #f1c40f; box-shadow: 0 0 12px rgba(241,196,15,0.8); }
+        .pulse-marker.rank-3::after { background: rgba(241,196,15,0.3); }
+
+        /* 4. Hijau Muda (Tinggi) */
+        .pulse-marker.rank-4 { background: #2ecc71; box-shadow: 0 0 12px rgba(46,204,113,0.8); }
+        .pulse-marker.rank-4::after { background: rgba(46,204,113,0.3); }
+
+        /* 5. Hijau Tua (Sangat Tinggi) */
+        .pulse-marker.rank-5 { background: #27ae60; box-shadow: 0 0 12px rgba(39,174,96,0.8); }
+        .pulse-marker.rank-5::after { background: rgba(39,174,96,0.3); }
+
+        /* Kotak Legenda Peta */
+        .map-legend { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); font-size: 10px; font-weight: bold; line-height: 1.5; color: #333; }
+        .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; }
+
         @keyframes pulseGlow { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
 
         .section-title { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 8px; display: block; border-left: 3px solid #00529c; padding-left: 8px; }
@@ -89,8 +115,7 @@
 
         <div style="padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
             <span class="section-title">🏢 Top 5 Perusahaan Terbesar</span>
-            <div id="top5-list" style="display: flex; flex-direction: column;">
-                </div>
+            <div id="top5-list" style="display: flex; flex-direction: column;"></div>
         </div>
 
         <div style="padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
@@ -152,6 +177,23 @@
         
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
+
+        /* Tambah Kontrol Legenda ke Pojok Kiri Atas Peta */
+        var legendControl = L.control({ position: 'topleft' });
+        legendControl.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'map-legend');
+            div.style.marginTop = "70px"; // Menghindari tumpang tindih dengan navbar
+            div.innerHTML = `
+                <div style="margin-bottom: 5px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Pencapaian Sales</div>
+                <div class="legend-item"><div class="legend-color" style="background:#27ae60"></div> Sangat Tinggi (Max)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#2ecc71"></div> Tinggi</div>
+                <div class="legend-item"><div class="legend-color" style="background:#f1c40f"></div> Cukup</div>
+                <div class="legend-item"><div class="legend-color" style="background:#e67e22"></div> Rendah</div>
+                <div class="legend-item"><div class="legend-color" style="background:#e74c3c"></div> Sangat Rendah (Min)</div>
+            `;
+            return div;
+        };
+        legendControl.addTo(map);
 
         var branchesLayer = L.layerGroup().addTo(map);
         var debtorsLayer = L.layerGroup().addTo(map);
@@ -312,12 +354,32 @@
         function renderMapLayers(stats, selectedUker, totalSalesNasional) {
             branchesLayer.clearLayers(); 
             
+            // --- LOGIKA GRADASI WARNA DINAMIS (MIN-MAX) ---
+            let values = Object.keys(stats).map(code => stats[code].os);
+            let minVal = Math.min(...values);
+            let maxVal = Math.max(...values);
+            let range = maxVal - minVal;
+            let interval = range / 5;
+
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
                     if (selectedUker !== 'all' && code !== selectedUker) return;
 
                     const dataCabang = stats[code];
                     const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
+
+                    // Tentukan kelas rank (1 s.d 5) secara dinamis berdasarkan porsi interval data
+                    let rankClass = "rank-1"; 
+                    if (range > 0) {
+                        let diff = dataCabang.os - minVal;
+                        if (diff >= interval * 4) rankClass = "rank-5";      // Hijau Tua
+                        else if (diff >= interval * 3) rankClass = "rank-4"; // Hijau Muda
+                        else if (diff >= interval * 2) rankClass = "rank-3"; // Kuning
+                        else if (diff >= interval * 1) rankClass = "rank-2"; // Oranye
+                        else rankClass = "rank-1";                           // Merah
+                    } else {
+                        rankClass = "rank-5"; // Jika data sama semua, default hijau tua
+                    }
 
                     const branchCardHTML = `
                         <div style="font-family: sans-serif; width: 230px; margin:-5px;">
@@ -331,8 +393,8 @@
                             </div>
                         </div>`;
 
-                    /* FIX: Label nama cabang permanen dihapus total, menyisakan penanda lingkaran pulse saja */
-                    const modernPinHTML = `<div class="pulse-marker"></div>`;
+                    // Menyisipkan rankClass hasil perhitungan dinamis ke elemen pin
+                    const modernPinHTML = `<div class="pulse-marker ${rankClass}"></div>`;
                         
                     const pinIcon = L.divIcon({ className: 'custom-div-icon', html: modernPinHTML, iconSize: [16, 16], iconAnchor: [8, 8] });
                     
