@@ -155,37 +155,47 @@
                    v > 0     ? '#c6dbef' : 'rgba(0,0,0,0.03)';
         }
 
-        async function initDashboard() {
-            try {
-                document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
-                
-                // FIXED: Link URL geojson sudah bersih dari typo double fetch
-                const geoRes = await fetch('https://raw.githubusercontent.com/anshori/indonesia-geojson/master/indonesia-kab.json');
-                geojsonData = await geoRes.json();
-                
-                document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
-                
-                // Cek apakah data menggunakan Base64 (BE) atau Backtick String biasa
-                let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
-                let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
-
-                const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
-                parsedValidation.forEach(row => {
-                    if(row.state_code && row.nama_provinsi) {
-                        stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
-                    }
-                });
-
-                document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
-                
-                rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
-                
-                processData();
-            } catch (e) { 
-                console.error(e);
-                document.getElementById('loading-overlay').innerText = "Terjadi kesalahan internal data atau file pendukung (.js) belum siap.";
-            }
+async function initDashboard() {
+    try {
+        document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
+        
+        // --- PERBAIKAN DI SINI ---
+        // Menggunakan URL alternatif dari repositori superpikar yang strukturnya sama dan aktif
+        const geoRes = await fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-kab.json');
+        
+        if (!geoRes.ok) {
+            throw new Error(`Gagal memuat GeoJSON: Status ${geoRes.status}`);
         }
+        
+        geojsonData = await geoRes.json();
+        
+        document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
+        
+        // Cek apakah data menggunakan Base64 (BE) atau Backtick String biasa
+        let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
+        let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
+
+        const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
+        parsedValidation.forEach(row => {
+            if(row.state_code && row.nama_provinsi) {
+                stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
+            }
+        });
+
+        document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
+        
+        rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
+        
+        processData();
+    } catch (e) { 
+        console.error(e);
+        document.getElementById('loading-overlay').innerHTML = `
+            <div style="color:#e74c3c; font-weight:bold; text-align:center; padding:20px;">
+                ❌ Terjadi kesalahan data atau file pendukung belum siap.<br>
+                <small style="color:#666; font-weight:normal;">Detail: ${e.message}</small>
+            </div>`;
+    }
+}
 
         document.getElementById('filter-month').addEventListener('change', processData);
         document.getElementById('filter-uker').addEventListener('change', function() {
