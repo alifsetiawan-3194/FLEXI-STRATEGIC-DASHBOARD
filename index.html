@@ -285,13 +285,13 @@ function renderChoropleth(cityData) {
 
             let val = cityData[normalName] || 0;
             
-            // Konfigurasi warna dinamis
+// Konfigurasi warna dinamis - SUDAH DIKOREKSI BIAR TEBAL SOLID
             return {
                 fillColor: getColor(val),
-                weight: val > 0 ? 1.5 : 0.5, // Tebalkan garis batas jika wilayah tersebut ada debiturnya
+                weight: val > 0 ? 2 : 0.5,           // Garis batas wilayah dipertegas jika ada data
                 opacity: 1,
-                color: val > 0 ? '#00529c' : '#ddd', // Garis biru jika ada debitur, abu-abu tipis jika kosong
-                fillOpacity: val > 0 ? 0.75 : 0.02 // Wilayah tanpa debitur dibuat hampir transparan transparan sempurna
+                color: val > 0 ? '#ffffff' : '#e0e0e0', // Garis putih solid biar kontras memisahkan antar kota
+                fillOpacity: val > 0 ? 1 : 0.02        // JAMINAN TEBAL: Set ke 1 (100% full warnanya tanpa transparan)
             };
         },
         onEachFeature: function(feature, layer) {
