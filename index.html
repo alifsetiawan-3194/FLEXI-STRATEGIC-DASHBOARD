@@ -351,42 +351,51 @@
             });
         }
 
-        function renderMapLayers(stats, selectedUker, totalSalesNasional) {
+       function renderMapLayers(stats, selectedUker, totalSalesNasional) {
     branchesLayer.clearLayers(); 
-    
-    // 1. Ambil semua uker yang memiliki data sales dan masukkan ke dalam array
-    let ukerList = Object.keys(stats)
-        .filter(code => geoMapping[code])
-        .map(code => {
-            return { code: code, os: stats[code].os };
-        });
 
-    // 2. Urutkan dari nilai sales TERKECIL ke TERBESAR
-    ukerList.sort((a, b) => a.os - b.os);
-    
-    let totalUker = ukerList.length;
+    // 1. Cari tahu dulu berapa kontribusi (%) tertinggi di antara semua uker saat ini
+    let maxKontribusi = 0;
+    Object.keys(stats).forEach(code => {
+        if(geoMapping[code]) {
+            const dataCabang = stats[code];
+            const kontribusi = totalSalesNasional > 0 ? (dataCabang.os / totalSalesNasional) * 100 : 0;
+            if (kontribusi > maxKontribusi) {
+                maxKontribusi = kontribusi;
+            }
+        }
+    });
 
-    // 3. Masukkan kembali ke dalam object peta dengan penentuan warna berdasarkan peringkat (Kuantil)
+    // 2. Buat threshold dinamis berbasis nilai kontribusi tertinggi saat ini (maxKontribusi)
+    // Nilai tertinggi (misal Makassar 51.4%) akan menjadi jangkar 100% dari batas atas.
+    let batasHijauTua  = maxKontribusi * 0.70; // Top performa (70% - 100% dari max)
+    let batasHijauMuda = maxKontribusi * 0.35; // Performa tinggi (35% - 69% dari max)
+    let batasKuning    = maxKontribusi * 0.15; // Performa cukup (15% - 34% dari max)
+    let batasOranye    = maxKontribusi * 0.04; // Performa rendah (4% - 14% dari max)
+    // Di bawah 4% dari maxKontribusi otomatis MERAH (untuk memotong angka 1% atau 0.x% agar tetap merah)
+
     Object.keys(stats).forEach(code => {
         if(geoMapping[code]) {
             if (selectedUker !== 'all' && code !== selectedUker) return;
 
             const dataCabang = stats[code];
-            const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
+            const kontribusiNum = totalSalesNasional > 0 ? (dataCabang.os / totalSalesNasional) * 100 : 0;
+            const kontribusiStr = kontribusiNum.toFixed(1);
 
-            // Cari posisi peringkat uker ini (index 0 sampai totalUker - 1)
-            let ukerIndex = ukerList.findIndex(item => item.code === code);
-            
-            // Tentukan warna berdasarkan posisi persentil populasi uker
+            // 3. Klasifikasi warna berdasarkan threshold dinamis yang baru
             let rankClass = "rank-1"; 
-            if (totalUker > 1) {
-                let percentile = ukerIndex / (totalUker - 1); // Hasilnya 0.0 sampai 1.0
-                
-                if (percentile >= 0.8) rankClass = "rank-5";      // 20% Uker Tertinggi (Pasti Hijau Tua termasuk Makassar)
-                else if (percentile >= 0.6) rankClass = "rank-4"; // 20% Uker Tinggi (Hijau Muda)
-                else if (percentile >= 0.4) rankClass = "rank-3"; // 20% Uker Cukup (Kuning)
-                else if (percentile >= 0.2) rankClass = "rank-2"; // 20% Uker Rendah (Oranye)
-                else rankClass = "rank-1";                           // 20% Uker Terendah (Merah)
+            if (maxKontribusi > 0) {
+                if (kontribusiNum >= batasHijauTua) {
+                    rankClass = "rank-5";      // Hijau Tua (Makassar masuk sini)
+                } else if (kontribusiNum >= batasHijauMuda) {
+                    rankClass = "rank-4"; // Hijau Muda (Angka kisaran belasan/puluhan persen teratas)
+                } else if (kontribusiNum >= batasKuning) {
+                    rankClass = "rank-3"; // Kuning (Angka menengah seperti 7% - 10%)
+                } else if (kontribusiNum >= batasOranye) {
+                    rankClass = "rank-2"; // Oranye (Angka kecil di atas nol, misal 2% - 3%)
+                } else {
+                    rankClass = "rank-1"; // Merah (Angka sangat kritis, di bawah 2% atau mendekati 0%)
+                }
             } else {
                 rankClass = "rank-5";
             }
@@ -399,7 +408,7 @@
                     <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
                         <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME DIKELUARKAN</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
                         <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
-                        <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
+                        <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusiStr}% vs Nasional</span></div>
                     </div>
                 </div>`;
 
