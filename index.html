@@ -9,31 +9,25 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
         #map { height: 100vh; width: 100%; position: absolute; z-index: 1; }
         
-        /* 1. Navigasi Menu Tetap Aman di Pojok Kiri Atas */
         .navbar { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
         .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; display: flex; align-items: center; gap: 5px; }
         .nav-btn.active { background: #00529c; color: white; }
         
-        /* Sidebar Panel Kanan */
         .sidebar { position: absolute; top: 20px; right: 20px; width: 340px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 90vh; overflow-y: auto; }
         
-        /* Card Stats */
         .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #00529c; margin-bottom: 8px; flex: 1; }
         .stat-card small { color: #888; font-size: 9px; font-weight: bold; text-transform: uppercase; }
         .stat-card div { font-weight: 800; font-size: 18px; color: #333; margin-top: 1px; }
         
-        /* Filter Container */
         .filter-container { display: flex; gap: 8px; margin-bottom: 12px; }
         .filter-box { background: #00529c; padding: 10px; border-radius: 8px; color: white; flex: 1; }
         .filter-select { width: 100%; padding: 5px; border-radius: 5px; border: none; font-size: 11px; font-weight: bold; margin-top: 4px; }
 
-        /* Loading & Reset Button */
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .reset-btn { position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; border: none; display: none; }
 
-        /* Pins Style */
         .custom-pin { width: 14px; height: 14px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); cursor: pointer; position: relative; }
         .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
         .custom-div-icon { background: transparent !important; border: none !important; }
@@ -143,10 +137,7 @@
             try {
                 let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
                 rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
-                
-                // Menyiapkan pilihan bulan otomatis dari isi file data
                 generateMonthDropdown();
-                
                 processData();
             } catch (e) { 
                 document.getElementById('loading-overlay').innerHTML = `<div style="color:#e74c3c; font-weight:bold; padding:20px; text-align:center;">❌ Eror Sinkronisasi Data Internal.<br><small>${e.message}</small></div>`;
@@ -175,16 +166,15 @@
         }
 
         document.getElementById('filter-month').addEventListener('change', processData);
+        
         document.getElementById('filter-uker').addEventListener('change', function() {
-            // 2. Autozoom Cabang Berfungsi Normal Kembali
             const code = this.value;
-            if(code !== 'all' && geoMapping[code]) {
-                map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1.2 });
+            if (code !== 'all') {
                 document.getElementById('btn-reset').style.display = 'block';
-            } else if (code === 'all') {
+            } else {
                 resetToNational();
             }
-            processData();
+            processData(); // Pemicu pemrosesan dan autozoom presisi
         });
 
         function resetToNational() {
@@ -201,14 +191,15 @@
             
             debtorsLayer.clearLayers();
 
-            // Hitung total sales nasional murni untuk rasio kontribusi
+            // Array untuk menampung koordinat sebaran khusus uker terpilih
+            let currentUkerCoords = [];
+
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
                 totalSalesNasional += parseFloat(d.approved_amount || 0);
             });
 
-            // Proses pemetaan spasial dan akumulasi statistik uker
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
@@ -217,7 +208,6 @@
                 let code = loanId.substring(0, 4);
                 let amt = parseFloat(d.approved_amount || 0);
 
-                // FIX LOGIKA TYPO: Penghitungan grafik line chart berjalan lancar kembali tanpa crash
                 if(month) {
                     if (selectedUker === 'all' || code === selectedUker) {
                         mTrend[month-1] += amt;
@@ -232,9 +222,11 @@
                 if (selectedUker !== 'all' && code !== selectedUker) return;
                 totalSales += amt; totalNOA += 1;
 
-                // Render marker lingkaran lokasi debitur/PT jika koordinat tersedia
                 let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
                 if (latPt && lngPt) {
+                    // Masukkan koordinat sebaran data uker yang dipilih ke array penampung
+                    currentUkerCoords.push([latPt, lngPt]);
+
                     const PTMarker = L.circleMarker([latPt, lngPt], { radius: 5, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.9, fillOpacity: 0.7 });
                     const tooltipPt = `
                         <div style="font-family: sans-serif; padding: 2px; font-size:11px;">
@@ -249,12 +241,22 @@
 
             document.getElementById('total-os').innerText = formatRupiah(totalSales);
             document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
-            
-            // Sembunyikan loading overlay karena proses render sukses
             document.getElementById('loading-overlay').style.display = 'none';
 
             renderMapLayers(ukerStats, selectedUker, totalSalesNasional);
             renderTrend(mTrend);
+
+            // LOGIKA AUTOZOOM PRESISI BERDASARKAN SEBARAN DEBITUR RIIL
+            if (selectedUker !== 'all') {
+                if (currentUkerCoords.length > 0) {
+                    // Zoom pas di tengah-tengah area sebaran seluruh titik PT milik cabang tersebut
+                    const bounds = L.latLngBounds(currentUkerCoords);
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 9, animate: true, duration: 1.2 });
+                } else if (geoMapping[selectedUker]) {
+                    // Fallback jika belum ada data PT, gunakan posisi default cabang
+                    map.setView([geoMapping[selectedUker].lat, geoMapping[selectedUker].lng], 9, { animate: true, duration: 1.2 });
+                }
+            }
         }
 
         function renderMapLayers(stats, selectedUker, totalSalesNasional) {
@@ -265,7 +267,6 @@
                     const dataCabang = stats[code];
                     const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
 
-                    // 3. Floating Detail Card Pencapaian (Sales, NOA, Kontribusi vs Nasional) nempel di Pin Cabang
                     const branchCardHTML = `
                         <div style="font-family: sans-serif; width: 230px; margin:-5px;">
                             <div style="background: #00529c; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
@@ -285,7 +286,7 @@
                     marker.bindPopup(branchCardHTML, { offset: L.point(0, -10), closeOnClick: false });
 
                     if (selectedUker === code) {
-                        setTimeout(() => { marker.openPopup(); }, 300);
+                        setTimeout(() => { marker.openPopup(); }, 400);
                     }
                 }
             });
