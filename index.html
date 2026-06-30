@@ -131,7 +131,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-   <script>
+  <script>
         const geoMapping = {
             "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
             "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
@@ -175,26 +175,59 @@
             zoomControl: false 
         });
         
+        // Tombol Zoom dikembalikan murni ke pojok kiri bawah tanpa gangguan elemen lain
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
 
-        /* Tambah Kontrol Legenda ke Pojok Kiri Bawah (Di atas Tombol Zoom) */
-        var legendControl = L.control({ position: 'bottomleft' });
-        legendControl.onAdd = function (map) {
-            var div = L.DomUtil.create('div', 'map-legend');
-            div.style.marginBottom = "10px"; 
-            div.style.marginLeft = "10px";
-            div.innerHTML = `
-                <div style="margin-bottom: 5px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Pencapaian Sales</div>
+        /* =========================================================================
+           INJEKSI OTOMATIS: STYLE & ELEMEN LEGENDA HORIZONTAL MODERN DI BAWAH LAYAR
+           ========================================================================= */
+        const legendStyle = document.createElement('style');
+        legendStyle.innerHTML = `
+            .bottom-horizontal-legend {
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 255, 255, 0.95);
+                padding: 10px 20px;
+                border-radius: 30px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+                display: flex;
+                gap: 20px;
+                align-items: center;
+                z-index: 1000;
+                font-family: sans-serif;
+            }
+            .legend-title {
+                font-size: 11px;
+                font-weight: bold;
+                color: #333;
+                border-right: 2px solid #ddd;
+                padding-right: 15px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .legend-group { display: flex; gap: 15px; }
+            .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #555; }
+            .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+        `;
+        document.head.appendChild(legendStyle);
+
+        const legendDiv = document.createElement('div');
+        legendDiv.className = 'bottom-horizontal-legend';
+        legendDiv.innerHTML = `
+            <div class="legend-title">Pencapaian Sales</div>
+            <div class="legend-group">
                 <div class="legend-item"><div class="legend-color" style="background:#27ae60"></div> Sangat Tinggi (Max)</div>
                 <div class="legend-item"><div class="legend-color" style="background:#2ecc71"></div> Tinggi</div>
                 <div class="legend-item"><div class="legend-color" style="background:#f1c40f"></div> Cukup</div>
                 <div class="legend-item"><div class="legend-color" style="background:#e67e22"></div> Rendah</div>
                 <div class="legend-item"><div class="legend-color" style="background:#e74c3c"></div> Sangat Rendah (Min)</div>
-            `;
-            return div;
-        };
-        legendControl.addTo(map);
+            </div>
+        `;
+        document.getElementById('map').appendChild(legendDiv);
+        /* ========================================================================= */
 
         var branchesLayer = L.layerGroup().addTo(map);
         var debtorsLayer = L.layerGroup().addTo(map);
@@ -355,7 +388,6 @@
         function renderMapLayers(stats, selectedUker, totalSalesNasional) {
             branchesLayer.clearLayers(); 
 
-            // --- LOGIKA GRADASI DINAMIS PROPORSIONAL (MENGATASI OUTLIER MAKASSAR) ---
             let maxKontribusi = 0;
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
