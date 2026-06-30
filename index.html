@@ -9,13 +9,16 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
         #map { height: 100vh; width: 100%; position: absolute; z-index: 1; }
         
-        /* Layout Card Interaktif Sidebar */
-        .sidebar { position: absolute; top: 80px; right: 20px; width: 340px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 85vh; overflow-y: auto; }
-        .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; }
+        /* 1. BALIK KE SEMULA: Navigasi Menu di Pojok Kiri Atas */
+        .navbar { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
+        .nav-btn { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; font-size: 11px; color: #555; display: flex; align-items: center; gap: 5px; }
         .nav-btn.active { background: #00529c; color: white; }
         
+        /* Sidebar Control & Chart di Kanan */
+        .sidebar { position: absolute; top: 20px; right: 20px; width: 340px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 90vh; overflow-y: auto; }
+        
         /* Stats Card Styling */
-        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #00529c; margin-bottom: 8px; flex:1;}
+        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #00529c; margin-bottom: 8px; flex: 1; }
         .stat-card small { color: #888; font-size: 9px; font-weight: bold; text-transform: uppercase; }
         .stat-card div { font-weight: 800; font-size: 18px; color: #333; margin-top: 1px; }
         
@@ -24,15 +27,15 @@
         .filter-box { background: #00529c; padding: 10px; border-radius: 8px; color: white; flex: 1; }
         .filter-select { width: 100%; padding: 5px; border-radius: 5px; border: none; font-size: 11px; font-weight: bold; margin-top: 4px; }
 
-        /* Loading & Reset */
+        /* Loading & Reset Button */
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #00529c; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .reset-btn { position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; border:none; display:none; }
+        .reset-btn { position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: #e74c3c; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; border: none; display: none; }
 
-        /* Kustom Marker Cabang & Debitur */
-        .custom-pin { width: 16px; height: 16px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); cursor: pointer; position: relative;}
-        .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.3); pointer-events: none; }
+        /* Kustom Marker */
+        .custom-pin { width: 14px; height: 14px; border-radius: 50%; background: #e74c3c; border: 2px solid #fff; box-shadow: 0px 0px 6px rgba(0,0,0,0.5); cursor: pointer; position: relative; }
+        .pin-label { background: rgba(231, 76, 60, 0.9); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
         .custom-div-icon { background: transparent !important; border: none !important; }
     </style>
 </head>
@@ -45,14 +48,14 @@
 
     <div id="map"></div>
 
+    <div class="navbar">
+        <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
+        <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
+    </div>
+
     <button id="btn-reset" class="reset-btn" onclick="resetToNational()">🔄 KEMBALI KE NASIONAL</button>
 
     <div class="sidebar">
-        <div class="navbar" style="position:static; margin-bottom:12px; gap:8px;">
-            <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
-            <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
-        </div>
-
         <div class="filter-container">
             <div class="filter-box">
                 <span style="font-size: 10px; font-weight: bold;">BULAN</span>
@@ -82,14 +85,12 @@
 
     <script src="mapping_state.js"></script>
     <script src="data_pencairan_2026.js"></script>
-    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
-        // Data Spasial KOORDINAT ASLI Kantor Cabang (Ini Label Pin yang sempet ilang)
         const geoMapping = {
             "0010": { name: "CB MENARA BRILIAN", lat: -6.220556, lng: 106.818444 },
             "0020": { name: "CB WARUNG JATI", lat: -6.273611, lng: 106.829167 },
@@ -122,10 +123,9 @@
         });
 
         var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
-        var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0, closePopupOnClick: false });
+        var map = L.map('map', { center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0 });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
 
-        // Layer Spasial (1 untuk Kantor Cabang, 1 untuk Debitur)
         var branchesLayer = L.layerGroup().addTo(map);
         var debtorsLayer = L.layerGroup().addTo(map);
         let rawSales = [], trendChart = null;
@@ -150,8 +150,10 @@
 
         document.getElementById('filter-month').addEventListener('change', processData);
         document.getElementById('filter-uker').addEventListener('change', function() {
+            // 2. BALIKKAN AUTOZOOM: Saat milih salah satu cabang dari select option
             const code = this.value;
             if(code !== 'all' && geoMapping[code]) {
+                map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1.2 });
                 document.getElementById('btn-reset').style.display = 'block';
             } else if (code === 'all') {
                 resetToNational();
@@ -169,80 +171,93 @@
         function processData() {
             const m = document.getElementById('filter-month').value;
             const selectedUker = document.getElementById('filter-uker').value;
-            let totalSales = 0, totalNOA = 0, mTrend = Array(12).fill(0), ukerStats = {};
+            let totalSalesNasional = 0, totalSales = 0, totalNOA = 0, mTrend = Array(12).fill(0), ukerStats = {};
             
-            // Bersihkan data spasial perusahaan lama
             debtorsLayer.clearLayers();
+
+            // Hitung Total Nasional Dulu untuk rasio kontribusi
+            rawSales.forEach(d => {
+                let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
+                if (m !== 'all' && month != m) return;
+                totalSalesNasional += parseFloat(d.approved_amount || 0);
+            });
 
             rawSales.forEach(d => {
                 let tgl = d.tanggal_pencairan || "", month = parseInt(tgl.split('-')[1]);
                 if (m !== 'all' && month != m) return;
                 let loanId = String(d.loan_account_id || "").padStart(15, "0");
                 let code = loanId.substring(0, 4);
-                if (selectedUker !== 'all' && code !== selectedUker) return;
-
+                
                 let amt = parseFloat(d.approved_amount || 0);
-                totalSales += amt; totalNOA += 1; 
-                if(month) mTrend[month-1] += amt;
+                if(month) mTrend[month-1] += (selectedUker === 'all' || code === selectedUker) ? amt : 0;
+
                 if(geoMapping[code]) {
                     if(!ukerStats[code]) ukerStats[code] = { os: 0, noa: 0 };
                     ukerStats[code].os += amt; ukerStats[code].noa += 1;
                 }
 
-                // --- CORE FEATURE GOAL: SPASIAL PERUSAHAAN (Lokasi Riil PT/CV) ---
-                // Data ini harus ada di file CSV kamu (Kolom: lat_pt, lng_pt, nama_pt, nama_uker_pt, kota_pt)
-                let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
-                let namaPt = d.nama_pt || "Perusahaan Anonim";
-                let amountPt = formatRupiah(amt);
-                let lokasiPt = (d.kota_pt || "Lokasi") + " - " + (d.nama_uker_pt || "Uker");
+                if (selectedUker !== 'all' && code !== selectedUker) return;
+                totalSales += amt; totalNOA += 1;
 
+                // Render Sebaran Lokasi Perusahaan Aktif (Goal 2)
+                let latPt = parseFloat(d.lat_pt), lngPt = parseFloat(d.lng_pt);
                 if (latPt && lngPt) {
-                    // Buat Dot density kecil warna merah untuk perusahaan agar performa ringan
-                    const PTMarker = L.circleMarker([latPt, lngPt], { radius: 6, fillColor: "#e74c3c", color: "#fff", weight: 1, opacity: 1, fillOpacity: 0.8 });
-                    
+                    const PTMarker = L.circleMarker([latPt, lngPt], { radius: 5, fillColor: "#2980b9", color: "#fff", weight: 1, opacity: 0.9, fillOpacity: 0.7 });
                     const tooltipPt = `
-                        <div style="font-family: sans-serif; padding: 2px;">
-                            <strong style="color: #00529c; font-size:12px;">📍 ${namaPt}</strong><br>
-                            <small style="color:#555;">Apply Amount: <b>${amountPt}</b></small><br>
-                            <small style="color:#888;">${lokasiPt}</small>
-                        </div>
-                    `;
+                        <div style="font-family: sans-serif; padding: 2px; font-size:11px;">
+                            <strong style="color: #2980b9;">🏢 ${d.nama_pt || "Perusahaan"}</strong><br>
+                            <span>Volume: <b>${formatRupiah(amt)}</b></span><br>
+                            <small style="color:#777;">Kota: ${d.kota_pt || "-"}</small>
+                        </div>`;
                     PTMarker.bindPopup(tooltipPt);
                     PTMarker.addTo(debtorsLayer);
                 }
             });
 
-            // Update Angka di Sidebar
             document.getElementById('total-os').innerText = formatRupiah(totalSales);
             document.getElementById('total-noa').innerText = totalNOA.toLocaleString('id-ID');
             document.getElementById('loading-overlay').style.display = 'none';
 
-            // Gambar ulang Label Cabang & Sebaran Debitur Riil
-            renderMapLayers(ukerStats, selectedUker);
+            renderMapLayers(ukerStats, selectedUker, totalSalesNasional);
             renderTrend(mTrend);
         }
 
-        function renderMapLayers(stats, selectedUker) {
+        function renderMapLayers(stats, selectedUker, totalSalesNasional) {
             branchesLayer.clearLayers(); 
-            // Tetap Munculkan Kantor Cabang Pusatnya (Label Pin Merah Gede)
+            
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
+                    const dataCabang = stats[code];
+                    const kontribusi = totalSalesNasional > 0 ? ((dataCabang.os / totalSalesNasional) * 100).toFixed(1) : 0;
+
+                    // 3. Floating Info Card nempel di Pin Cabang (Sales, NOA, Kontribusi vs Nasional)
+                    const branchCardHTML = `
+                        <div style="font-family: sans-serif; width: 230px; margin:-5px;">
+                            <div style="background: #00529c; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
+                                🏢 ${geoMapping[code].name}
+                            </div>
+                            <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
+                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">VOLUME DIKELUARKAN</small><br><span style="font-size:14px; font-weight:bold; color:#2c3e50;">${formatRupiah(dataCabang.os)}</span></div>
+                                <div style="margin-bottom: 5px;"><small style="color:#888; font-size:9px; font-weight:bold;">TOTAL NOA</small><br><span style="font-size:13px; font-weight:bold; color:#27ae60;">${dataCabang.noa.toLocaleString('id-ID')} Debitur</span></div>
+                                <div style="border-top:1px solid #eee; padding-top:4px;"><span style="color:#e67e22; font-size:11px; font-weight:bold;">📈 Kontribusi: ${kontribusi}% vs Nasional</span></div>
+                            </div>
+                        </div>`;
+
                     const pinHTML = `<div class='custom-pin'><span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span></div>`;
                     const pinIcon = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
-                    L.marker([geoMapping[code].lat, geoMapping[code].lng], { icon: pinIcon }).addTo(branchesLayer);
+                    
+                    const marker = L.marker([geoMapping[code].lat, geoMapping[code].lng], { icon: pinIcon }).addTo(branchesLayer);
+                    marker.bindPopup(branchCardHTML, { offset: L.point(0, -10), closeOnClick: false });
+
+                    // Jika terpilih, buka otomatis floating popup card di pin cabang tersebut
+                    if (selectedUker === code) {
+                        setTimeout(() => { marker.openPopup(); }, 300);
+                    }
                 }
             });
-
-            // Goal Tercapai: Zooming Spasial menyesuaikan sebaran PT (bukan zoom ke koordinat cabang doang)
-            if (selectedUker !== 'all' && debtorsLayer.getLayers().length > 0) {
-                // Feature fitBounds ini bikin peta auto-zoom ke sekumpulan titik PT yang apply
-                const ptBounds = L.featureGroup(debtorsLayer.getLayers()).getBounds();
-                map.fitBounds(ptBounds, { animate:true, duration: 1, padding: [20, 20] });
-            }
         }
 
         function renderTrend(data) {
-            // (Fungsi renderTrend Chart.js di bagian bawah ini dipertahankan tetap sama)
             const ctx = document.getElementById('trendChart').getContext('2d');
             if(trendChart) trendChart.destroy();
             trendChart = new Chart(ctx, {
