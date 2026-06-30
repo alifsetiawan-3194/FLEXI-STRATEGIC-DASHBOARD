@@ -280,32 +280,42 @@ function renderChoropleth(cityData) {
 
     L.geoJson(geojsonData, {
         style: function(feature) {
-            let fName = (feature.properties.name || "").toUpperCase().trim();
-            let normalName = fName.replace("KABUPATEN ", "KAB. ").replace("KOTA ", "");
-
-            let val = cityData[normalName] || 0;
+            // Ambil nama dari GeoJSON asli (Contoh: "KOTA SURAKARTA", "KABUPATEN BOYOLALI")
+            let geoName = (feature.properties.name || "").toUpperCase().trim();
             
-// Konfigurasi warna dinamis - SUDAH DIKOREKSI BIAR TEBAL SOLID
+            // Cari apakah ada data transaksi kita yang namanya nyerempet/terkandung di nama GeoJSON
+            let val = 0;
+            Object.keys(cityData).forEach(dbName => {
+                // Jika dbName (misal: "SURAKARTA") ada di dalam geoName ("KOTA SURAKARTA"), ambil nilainya!
+                if (geoName.includes(dbName) || dbName.includes(geoName)) {
+                    val = cityData[dbName];
+                }
+            });
+
             return {
                 fillColor: getColor(val),
-                weight: val > 0 ? 2 : 0.5,           // Garis batas wilayah dipertegas jika ada data
+                weight: val > 0 ? 2 : 0.5,           // Tebalkan garis batas jika ada debitur
                 opacity: 1,
-                color: val > 0 ? '#ffffff' : '#e0e0e0', // Garis putih solid biar kontras memisahkan antar kota
-                fillOpacity: val > 0 ? 1 : 0.02        // JAMINAN TEBAL: Set ke 1 (100% full warnanya tanpa transparan)
+                color: val > 0 ? '#ffffff' : '#e0e0e0', // Garis pembatas putih solid biar kontras
+                fillOpacity: val > 0 ? 1 : 0.02       // 100% pekat tanpa transparan jika ada datanya
             };
         },
         onEachFeature: function(feature, layer) {
-            let fName = (feature.properties.name || "").toUpperCase().trim();
-            let normalName = fName.replace("KABUPATEN ", "KAB. ").replace("KOTA ", "");
+            let geoName = (feature.properties.name || "").toUpperCase().trim();
             
-            let val = cityData[normalName] || 0;
+            let val = 0;
+            Object.keys(cityData).forEach(dbName => {
+                if (geoName.includes(dbName) || dbName.includes(geoName)) {
+                    val = cityData[dbName];
+                }
+            });
+
             if(val > 0) {
-                // Beri popup informasi detail sebaran saat wilayah kab/kota diklik
                 layer.bindPopup(`
                     <div style="font-family:sans-serif; min-width:150px;">
-                        <b style="color:#00529c; font-size:12px;">${fName}</b><br>
+                        <b style="color:#00529c; font-size:12px;">${geoName}</b><br>
                         <hr style="margin:4px 0; border:0; border-top:1px solid #eee;">
-                        <small style="color:#666;">KONTRIBUSI PORTOPOLIO:</small><br>
+                        <small style="color:#666;">VOLUME PORTOFOLIO:</small><br>
                         <b style="font-size:13px; color:#333;">${formatRupiah(val)}</b>
                     </div>
                 `);
