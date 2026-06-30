@@ -161,7 +161,7 @@ async function initDashboard() {
         
         // --- PERBAIKAN DI SINI ---
         // Menggunakan URL alternatif dari repositori superpikar yang strukturnya sama dan aktif
-        const geoRes = await fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-kab.json');
+        const geoRes = await fetch('https://gist.githubusercontent.com/itnirwana/475e123fe5e4ad9aa5287070b6760124/raw/8c827376c7c2da48da93b749d2bc986427fc7e11/indonesia-regencies.geojson');
         
         if (!geoRes.ok) {
             throw new Error(`Gagal memuat GeoJSON: Status ${geoRes.status}`);
