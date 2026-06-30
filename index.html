@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Dashboard 2026 - Fixed Load</title>
+    <title>Flexi Dashboard 2026 - Real Client Distribution</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f4f7f6; overflow: hidden; }
@@ -40,7 +40,7 @@
 
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Batas Wilayah Kabupaten/Kota...</div>
+        <div id="loading-text" style="margin-top:10px; font-weight:bold; color:#00529c;">Memuat Batas Wilayah Sebaran Debitur...</div>
     </div>
 
     <div class="navbar">
@@ -146,6 +146,7 @@
             return "Rp " + Math.round(val).toLocaleString('id-ID');
         }
 
+        // Penyesuaian degradasi warna berdasarkan volume sales di lokasi debitur
         function getColor(v) {
             return v > 100e9 ? '#084594' :
                    v > 50e9  ? '#2171b5' :
@@ -155,53 +156,49 @@
                    v > 0     ? '#c6dbef' : 'rgba(0,0,0,0.03)';
         }
 
-async function initDashboard() {
-    try {
-        document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
-        
-        // --- PERBAIKAN DI SINI ---
-        // Menggunakan URL alternatif dari repositori superpikar yang strukturnya sama dan aktif
-        const geoRes = await fetch('https://gist.githubusercontent.com/itnirwana/475e123fe5e4ad9aa5287070b6760124/raw/8c827376c7c2da48da93b749d2bc986427fc7e11/indonesia-regencies.geojson');
-        
-        if (!geoRes.ok) {
-            throw new Error(`Gagal memuat GeoJSON: Status ${geoRes.status}`);
-        }
-        
-        geojsonData = await geoRes.json();
-        
-        document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
-        
-        // Cek apakah data menggunakan Base64 (BE) atau Backtick String biasa
-        let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
-        let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
+        async function initDashboard() {
+            try {
+                document.getElementById('loading-text').innerText = "Memuat Batas Wilayah Kabupaten/Kota...";
+                
+                // CDN DATA GEOJSON ALTERNATIF GLOBAL - ANTI-404 & BERISI DATA KABUPATEN LENGKAP
+                const geoRes = await fetch('https://cdn.jsdelivr.net/gh/renndyS/indonesia-geojson@master/indonesia-kab.json');
+                
+                if (!geoRes.ok) {
+                    throw new Error(`Gagal menghubungi server peta. Status: ${geoRes.status}`);
+                }
+                geojsonData = await geoRes.json();
+                
+                document.getElementById('loading-text').innerText = "Mengekstrak Kamus Wilayah Eksternal...";
+                
+                let mappingSource = typeof rawMappingDataBE !== 'undefined' ? atob(rawMappingDataBE) : rawMappingData;
+                let pencairanSource = typeof rawPencairanDataBE !== 'undefined' ? atob(rawPencairanDataBE) : rawPencairanData;
 
-        const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
-        parsedValidation.forEach(row => {
-            if(row.state_code && row.nama_provinsi) {
-                stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
+                const parsedValidation = Papa.parse(mappingSource, { header: true, skipEmptyLines: true }).data;
+                parsedValidation.forEach(row => {
+                    if(row.state_code && row.nama_provinsi) {
+                        stateDictionary[String(row.state_code).trim()] = row.nama_provinsi.toUpperCase().trim();
+                    }
+                });
+
+                document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
+                rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
+                
+                processData();
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div style="color:#e74c3c; font-weight:bold; text-align:center; padding:20px; font-family:sans-serif;">
+                        ❌ Terjadi kesalahan sinkronisasi data.<br>
+                        <small style="color:#666; font-weight:normal;">Detail: ${e.message}</small>
+                    </div>`;
             }
-        });
-
-        document.getElementById('loading-text').innerText = "Memproses Data Transaksi Penjualan...";
-        
-        rawSales = Papa.parse(pencairanSource, { header: true, skipEmptyLines: true, dynamicTyping: true }).data;
-        
-        processData();
-    } catch (e) { 
-        console.error(e);
-        document.getElementById('loading-overlay').innerHTML = `
-            <div style="color:#e74c3c; font-weight:bold; text-align:center; padding:20px;">
-                ❌ Terjadi kesalahan data atau file pendukung belum siap.<br>
-                <small style="color:#666; font-weight:normal;">Detail: ${e.message}</small>
-            </div>`;
-    }
-}
+        }
 
         document.getElementById('filter-month').addEventListener('change', processData);
         document.getElementById('filter-uker').addEventListener('change', function() {
             const code = this.value;
             if(code !== 'all' && geoMapping[code]) {
-                map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1 });
+                map.setView([geoMapping[code].lat, geoMapping[code].lng], 8, { animate: true, duration: 1 });
                 document.getElementById('btn-reset').style.display = 'block';
             } else if (code === 'all') {
                 resetToNational();
@@ -250,6 +247,7 @@ async function initDashboard() {
                     ukerStats[code].noa += 1;
                 }
 
+                // PEMETAAN STRATEGIS: Membaca lokasi asli debitur berbasis state_code riil
                 let sCode = String(d.state_code || "").trim();
                 if(sCode.length === 3) sCode = "0" + sCode; 
                 
@@ -280,14 +278,25 @@ async function initDashboard() {
 
                     if(fName === "SOLO") fName = "SURAKARTA";
 
+                    // Mengambil nilai sales riil dari domisili debitur
                     let val = cityData[fName] || 0;
                     return {
                         fillColor: getColor(val),
                         weight: 1, 
                         opacity: 1,
                         color: '#ffffff', 
-                        fillOpacity: 0.6
+                        fillOpacity: 0.65
                     };
+                },
+                onEachFeature: function(feature, layer) {
+                    let fName = (feature.properties.NAME_2 || feature.properties.KAB_KOT || "").toUpperCase();
+                    fName = fName.replace("KABUPATEN ", "").replace("KOTA ", "").trim();
+                    if(fName === "SOLO") fName = "SURAKARTA";
+                    
+                    let val = cityData[fName] || 0;
+                    if(val > 0) {
+                        layer.bindPopup(`<b>${fName} (Lokasi Usaha Debitur)</b><br>Volume Penjualan: <b>${formatRupiah(val)}</b>`);
+                    }
                 }
             }).addTo(choroplethLayer);
         }
@@ -297,8 +306,8 @@ async function initDashboard() {
             Object.keys(stats).forEach(code => {
                 if(geoMapping[code]) {
                     const pinHTML = `
-                        <div class='custom-pin'>
-                            <span class='pin-label'>${geoMapping[code].name.replace("CB ", "")}</span>
+                        <div class='custom-pin' style='background: #e74c3c;'>
+                            <span class='pin-label' style='background: rgba(231, 76, 60, 0.9);'>${geoMapping[code].name.replace("CB ", "")}</span>
                         </div>`;
                     
                     const pin = L.divIcon({ className: 'custom-div-icon', html: pinHTML, iconSize: [12, 12], iconAnchor: [6, 6] });
@@ -308,21 +317,13 @@ async function initDashboard() {
                     
                     marker.bindPopup(`
                         <div style="font-family:sans-serif; min-width:160px;">
-                            <b style="color:#00529c; font-size:13px;">${geoMapping[code].name}</b><br>
+                            <b style="color:#e74c3c; font-size:13px;">${geoMapping[code].name} [Pusat Uker]</b><br>
                             <hr style="margin:4px 0; border:0; border-top:1px solid #ddd;">
-                            <small style="color:#666;">VOLUME SALES:</small><br>
+                            <small style="color:#666;">VOLUME DIKELUARKAN:</small><br>
                             <b style="font-size:14px; color:#333;">${formatRupiah(stats[code].os)}</b><br>
-                            <small style="color:#27ae60;"><b>Kontribusi: ${kontribusi}%</b> vs Nasional</small><br>
-                            <small style="color:#666;">TOTAL NOA:</small> <b>${stats[code].noa} Debitur</b>
+                            <small style="color:#27ae60;"><b>Kontribusi: ${kontribusi}%</b> vs Nasional</small>
                         </div>
                     `);
-                    
-                    marker.on('click', function() {
-                        document.getElementById('filter-uker').value = code;
-                        map.setView([geoMapping[code].lat, geoMapping[code].lng], 9, { animate: true, duration: 1 });
-                        document.getElementById('btn-reset').style.display = 'block';
-                        processData();
-                    });
                 }
             });
         }
@@ -352,20 +353,8 @@ async function initDashboard() {
                     plugins: { 
                         legend: { display: false },
                         datalabels: {
-                            align: function(context) {
-                                const index = context.dataIndex;
-                                const value = context.dataset.data[index];
-                                const prevValue = index > 0 ? context.dataset.data[index - 1] : null;
-                                if (prevValue !== null && (prevValue - value) > 10) return 'bottom';
-                                return 'top';
-                            },
-                            anchor: function(context) {
-                                const index = context.dataIndex;
-                                const value = context.dataset.data[index];
-                                const prevValue = index > 0 ? context.dataset.data[index - 1] : null;
-                                if (prevValue !== null && (prevValue - value) > 10) return 'start';
-                                return 'end';
-                            },
+                            align: 'top',
+                            anchor: 'end',
                             offset: 6,
                             color: '#333',
                             font: { size: 10, weight: 'bold' },
@@ -373,7 +362,7 @@ async function initDashboard() {
                         }
                     }, 
                     scales: { 
-                        y: { display: false, grid: { display: false }, suggestedMax: Math.max(...data.map(v => v/1e9)) + 15 },
+                        y: { display: false, grid: { display: false } },
                         x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#666' } }
                     } 
                 }
