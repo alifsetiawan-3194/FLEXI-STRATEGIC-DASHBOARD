@@ -3,80 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Struktur Dashboard - Risk & NPL</title>
+    <title>Dashboard Risk & NPL - Monitoring Terintegrasi</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: sans-serif;
-            background: #f4f7f6;
-            overflow: hidden;
+            margin: 0; padding: 0; height: 100%;
+            font-family: sans-serif; background: #f4f7f6; overflow: hidden;
         }
         .navbar {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 1000;
+            position: absolute; top: 15px; left: 20px;
+            display: flex; gap: 10px; z-index: 1000;
         }
         .nav-btn {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            text-decoration: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            font-weight: bold;
-            font-size: 12px;
-            color: #555;
-            border: 1px solid #ddd;
+            background: white; padding: 10px 20px; border-radius: 20px;
+            text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-weight: bold; font-size: 12px; color: #555; border: 1px solid #ddd;
         }
         .nav-btn.active {
-            background: #e53e3e; /* Warna Merah untuk menandakan halaman Risk aktif */
-            color: white;
-            border-color: #e53e3e;
+            background: #e53e3e; color: white; border-color: #e53e3e;
+        }
+        .filter-container {
+            position: absolute; top: 15px; left: 420px; z-index: 1000;
+            display: flex; gap: 8px; align-items: center;
+        }
+        .filter-input {
+            background: white; padding: 10px 15px; border-radius: 20px;
+            border: 1px solid #ddd; font-size: 12px; width: 180px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); outline: none;
+            transition: all 0.3s ease;
+        }
+        .filter-input:focus {
+            border-color: #e53e3e; width: 220px;
+        }
+        .filter-select {
+            background: white; padding: 10px 15px; border-radius: 20px;
+            border: 1px solid #ddd; font-weight: bold; font-size: 12px;
+            color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            outline: none; cursor: pointer;
         }
         #map {
-            height: 100vh;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+            height: 100vh; width: 100%; position: absolute; top: 0; left: 0; z-index: 1;
         }
         .sidebar {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            width: 360px;
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            z-index: 1000;
-            max-height: 85vh;
-            overflow-y: auto;
+            position: absolute; top: 80px; right: 20px; width: 360px;
+            background: white; border-radius: 12px; padding: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1); z-index: 1000;
+            max-height: 82vh; overflow-y: auto; box-sizing: border-box;
         }
         .panel-header {
-            background: #e53e3e; /* Header Merah khas Manajemen Risiko */
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
+            background: #e53e3e; padding: 12px; border-radius: 8px;
+            margin-bottom: 15px; color: white; font-weight: bold;
+            font-size: 13px; letter-spacing: 0.5px; text-align: center;
         }
-        .placeholder-box {
-            background: #f8f9fa;
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            color: #777;
-            margin-bottom: 15px;
-            border-radius: 8px;
+        .real-ui-box {
+            background: #fff; border: 1px solid #eef2f5; padding: 15px;
+            margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
+        .real-ui-box h4 {
+            margin: 0 0 12px 0; font-size: 12px; color: #7f8c8d;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 1px dashed #eee; padding-bottom: 6px;
+        }
+        .ratio-grid {
+            display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px;
+        }
+        .ratio-card {
+            background: #fafbfc; padding: 12px; border-radius: 6px;
+            border: 1px solid #f1f3f5;
+        }
+        .ratio-label { font-size: 10px; color: #95a5a6; font-weight: bold; margin-bottom: 4px; }
+        .ratio-num { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        .tunggakan-wrapper {
+            background: #fff5f5; padding: 12px; border-radius: 6px;
+            border-left: 4px solid #e53e3e; text-align: left;
+        }
+        .chart-container { position: relative; height: 180px; width: 100%; }
+        .company-list-wrapper { max-height: 200px; overflow-y: auto; }
+        .custom-risk-icon { background: none; border: none; }
+        .pulse-marker { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box; }
+        #btn-reset { position: absolute !important; bottom: 25px !important; left: 20px !important; z-index: 1010 !important; display: none; background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;}
     </style>
 </head>
 <body>
@@ -86,49 +95,479 @@
         <a href="risk.html" class="nav-btn active">⚠️ DPK & NPL RISK</a>
     </div>
 
+    <div class="filter-container">
+        <input type="text" id="search-uker" class="filter-input" placeholder="🔍 Cari / ketik cabang...">
+        <select id="filter-uker" class="filter-select">
+            <option value="all">🌍 NASIONAL (ALL UKER)</option>
+        </select>
+    </div>
+
     <div class="sidebar">
-        <div class="panel-header">🚨 PANEL UTAMA: MONITORING RISIKO</div>
+        <div class="panel-header">🚨 PANEL UTAMA: MONITORING KREDIT BERMASALAH</div>
         
-        <div class="placeholder-box">
-            <h4>[ Rasio Kelayakan Portofolio ]</h4>
-            <p>Tempat Rasio DPK (%), NPL (%), & Total Tunggakan</p>
+        <div class="real-ui-box">
+            <h4>[ Komposisi Rasio Risiko ]</h4>
+            <div class="ratio-grid">
+                <div class="ratio-card" style="text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div class="ratio-label" style="margin: 0;">RASIO NOA BERMASALAH (DPK+NPL)</div>
+                        <div class="ratio-num" id="rasio-dpk-pct" style="color: #e67e22; font-size: 20px; line-height: 1;">0.00%</div>
+                    </div>
+                    <div style="font-size: 11px; color: #555; border-top: 1px solid #f1f3f5; padding-top: 6px; display: flex; justify-content: space-between;">
+                        <span>Tunggakan: <strong id="detail-noa-bermasalah" style="color:#e67e22;">0 NOA</strong></span>
+                        <span>Total Portofolio: <strong id="detail-noa-aktif">0 NOA</strong></span>
+                    </div>
+                </div>
+
+                <div class="ratio-card" style="text-align: left; border-left: 4px solid #c0392b;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div>
+                            <div class="ratio-label" style="margin: 0;">RASIO NOMINAL NPL</div>
+                            <small id="ojk-status" style="font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-top: 2px;"></small>
+                        </div>
+                        <div class="ratio-num" id="rasio-npl-pct" style="color: #c0392b; font-size: 24px; line-height: 1;">0.00%</div>
+                    </div>
+                    <div style="font-size: 11px; color: #555; border-top: 1px solid #f1f3f5; padding-top: 6px; display: flex; flex-direction: column; gap: 2px;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>Total OS NPL: <strong id="detail-os-npl" style="color:#c0392b;">Rp 0</strong></span>
+                            <span>Total OS Aktif: <strong id="detail-os-aktif">Rp 0</strong></span>
+                        </div>
+                        <div style="font-size: 9.5px; color: #7f8c8d; font-style: italic; margin-top: 2px;" id="detail-os-dpk-info">
+                            *OS DPK (Waspada): Rp 0
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tunggakan-wrapper">
+                <div class="ratio-label" style="color: #e53e3e;">TOTAL OUTSTANDING NPL</div>
+                <div class="ratio-num" id="total-tunggakan-val" style="color: #cf2323; font-size: 20px;">Rp 0</div>
+            </div>
         </div>
         
-        <div class="placeholder-box">
-            <h4>[ Grafik Cabang Bermasalah ]</h4>
-            <p>Tempat Bar Chart Cabang dengan Tunggakan Tertinggi</p>
+        <div class="real-ui-box">
+            <h4>[ Top 5 Cabang Outstanding NPL Tertinggi ]</h4>
+            <div class="chart-container">
+                <canvas id="riskChart"></canvas>
+            </div>
         </div>
 
-        <div class="placeholder-box">
-            <h4>[ Tabel Kesehatan Instansi ]</h4>
-            <p>Tempat Detail List Perusahaan/Instansi Zona Merah</p>
+        <div class="real-ui-box">
+            <h4>[ Breakdown Portofolio Cabang ]</h4>
+            <div id="redzone-company-list" class="company-list-wrapper"></div>
         </div>
     </div>
 
+    <button id="btn-reset">🔄 BACK NASIONAL</button>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Batasan koordinat Indonesia yang sama persis dengan index.html
-        var indonesiaBounds = L.latLngBounds(
-            L.latLng(-11.0, 94.0),
-            L.latLng(6.0, 141.0)
-        );
+        const rawGeoMapping = {
+            "CB MENARA BRILIAN": { lat: -6.220556, lng: 106.818444 },
+            "CB WARUNG JATI": { lat: -6.273611, lng: 106.829167 },
+            "CB BEKASI": { lat: -6.238472, lng: 106.975417 },
+            "CB BANDUNG": { lat: -6.9175, lng: 107.6191 },
+            "CB CIREBON": { lat: -6.7320, lng: 108.5523 },
+            "CB SEMARANG": { lat: -6.9667, lng: 110.4167 },
+            "CB SOLO": { lat: -7.5661, lng: 110.8243 },
+            "CB TEMANGGUNG": { lat: -7.3167, lng: 110.1833 },
+            "CB YOGYAKARTA": { lat: -7.7956, lng: 110.3695 },
+            "CB SURABAYA": { lat: -7.2575, lng: 112.7521 },
+            "CB SIDOARJO": { lat: -7.4478, lng: 112.7183 },
+            "CB MALANG": { lat: -7.9839, lng: 112.6214 },
+            "CB LAMONGAN": { lat: -7.1192, lng: 112.4151 },
+            "CB MEDAN": { lat: 3.5952, lng: 98.6722 },
+            "CB PEKANBARU": { lat: 0.5071, lng: 101.4478 },
+            "CB LUBUK DALAM": { lat: 0.6387, lng: 101.8315 },
+            "CB UJUNG BATU": { lat: 0.7077, lng: 100.5284 },
+            "CB AIR MOLEK": { lat: -0.4578, lng: 102.2901 },
+            "KK DALU DALU": { lat: 1.1074, lng: 100.4116 },
+            "CB PALEMBANG": { lat: -2.9761, lng: 104.7754 },
+            "CB LAMPUNG": { lat: -5.3971, lng: 105.2668 },
+            "CB MAKASSAR": { lat: -5.1476, lng: 119.4327 }, 
+            "CB DENPASAR": { lat: -8.6705, lng: 115.2126 }
+        };
 
-        var map = L.map('map', {
-            center: [-2.5489, 118.0149],
-            zoom: 5,
-            minZoom: 5,
-            maxBounds: indonesiaBounds,
-            maxBoundsViscosity: 1.0
+        const geoMapping = {};
+        Object.keys(rawGeoMapping).forEach(key => {
+            geoMapping[key.toUpperCase().trim()] = rawGeoMapping[key];
+        });
+
+        var indonesiaBounds = L.latLngBounds(L.latLng(-11.0, 94.0), L.latLng(6.0, 141.0));
+        var map = L.map('map', { 
+            center: [-2.5489, 118.0149], zoom: 5, minZoom: 5, 
+            maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0, zoomControl: false 
         });
         
-        // Menggunakan tile layer minimalis yang sama agar konsisten
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; CartoDB'
-        }).addTo(map);
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB' }).addTo(map);
 
-        setTimeout(function(){ map.invalidateSize(); }, 500);
+        const legendStyle = document.createElement('style');
+        legendStyle.innerHTML = `
+            .leaflet-top.leaflet-left { top: 50% !important; transform: translateY(-50%); }
+            .bottom-horizontal-legend {
+                position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+                background: rgba(255, 255, 255, 0.95); padding: 10px 22px; border-radius: 30px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; gap: 18px; align-items: center; z-index: 1000;
+            }
+            .legend-title { font-size: 11px; font-weight: bold; color: #333; border-right: 2px solid #ddd; padding-right: 12px; text-transform: uppercase; }
+            .legend-group { display: flex; gap: 15px; }
+            .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #555; }
+            .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+            
+            .pulse-marker.risk-safe { background-color: #27ae60; }
+            .pulse-marker.risk-warning { background-color: #f1c40f; }
+            .pulse-marker.risk-critical { background-color: #e74c3c; animation: pulseRisk 1.5s infinite; }
+            @keyframes pulseRisk { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+        `;
+        document.head.appendChild(legendStyle);
+
+        const legendDiv = document.createElement('div');
+        legendDiv.className = 'bottom-horizontal-legend';
+        legendDiv.innerHTML = `
+            <div class="legend-title">Tingkat NPL</div>
+            <div class="legend-group">
+                <div class="legend-item"><div class="legend-color" style="background:#e74c3c"></div> Tinggi (>5%)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#f1c40f"></div> Waspada (2% - 5%)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#27ae60"></div> Aman (<2%)</div>
+            </div>
+        `;
+        document.getElementById('map').appendChild(legendDiv);
+
+        var branchesLayer = L.layerGroup().addTo(map);
+        let rawRiskData = [], barChartRisk = null;
+
+        function formatRupiah(val) {
+            if (!val) return "Rp 0";
+            if (val >= 1e12) return "Rp " + (val / 1e12).toFixed(2) + " T";
+            if (val >= 1e9) return "Rp " + (val / 1e9).toFixed(2) + " M";
+            if (val >= 1e6) return "Rp " + (val / 1e6).toFixed(1) + " Jt";
+            return "Rp " + Math.round(val).toLocaleString('id-ID');
+        }
+
+        async function initRiskDashboard() {
+            const selectUker = document.getElementById('filter-uker');
+            Object.keys(geoMapping).forEach(name => {
+                let opt = document.createElement('option');
+                opt.value = name;
+                opt.innerText = "🏢 " + name;
+                selectUker.appendChild(opt);
+            });
+
+            try {
+                const response = await fetch('data_risk_2026.csv');
+                if (response.ok) {
+                    const csvText = await response.text();
+                    rawRiskData = Papa.parse(csvText, {
+                        header: true, skipEmptyLines: true, dynamicTyping: true
+                    }).data;
+                }
+            } catch (e) { console.warn("Gagal memuat file CSV.", e); }
+
+            processRiskData();
+        }
+
+        document.getElementById('filter-uker').addEventListener('change', function() {
+            if (this.value !== 'all') {
+                document.getElementById('btn-reset').style.display = 'block';
+            } else {
+                resetRiskToNational();
+            }
+            processRiskData();
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', resetRiskToNational);
+
+        function resetRiskToNational() {
+            document.getElementById('filter-uker').value = 'all';
+            document.getElementById('search-uker').value = ""; 
+            let options = document.getElementById('filter-uker').options;
+            for (let i = 0; i < options.length; i++) {
+                options[i].style.display = ""; 
+            }
+            map.setView([-2.5489, 118.0149], 5);
+            document.getElementById('btn-reset').style.display = 'none';
+            processRiskData();
+        }
+
+        // IMPROVEMENT: Fitur Live Search & Anti-Typo (Satu huruf 'S')
+        document.getElementById('search-uker').addEventListener('input', function() {
+            let filterText = this.value.toUpperCase().trim();
+            let selectElement = document.getElementById('filter-uker');
+            let options = selectElement.options;
+            let visibleOptions = [];
+
+            for (let i = 0; i < options.length; i++) {
+                let optionText = options[i].text.toUpperCase();
+                let optionValue = options[i].value;
+
+                if (optionValue === 'all') {
+                    options[i].style.display = "";
+                    continue;
+                }
+
+                if (optionText.includes(filterText) || filterText.includes(optionText.replace("CB ", ""))) {
+                    options[i].style.display = ""; 
+                    visibleOptions.push(i); 
+                } else {
+                    options[i].style.display = "none"; 
+                }
+            }
+
+            if (visibleOptions.length === 1 && filterText !== "") {
+                selectElement.selectedIndex = visibleOptions[0];
+                document.getElementById('btn-reset').style.display = 'block';
+                processRiskData(); 
+            }
+            
+            if (filterText === "") {
+                selectElement.value = "all";
+                document.getElementById('btn-reset').style.display = 'none';
+                processRiskData();
+            }
+        });
+
+        document.getElementById('search-uker').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                let selectElement = document.getElementById('filter-uker');
+                let options = selectElement.options;
+                
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].style.display !== "none" && options[i].value !== "all") {
+                        selectElement.selectedIndex = i;
+                        document.getElementById('btn-reset').style.display = 'block';
+                        processRiskData();
+                        break;
+                    }
+                }
+            }
+        });
+
+        // IMPROVEMENT: Proses & Perhitungan Dinamis Angka / Rasio Risiko
+        function processRiskData() {
+            const selectedUker = document.getElementById('filter-uker').value.toUpperCase().trim();
+            let ukerAggregated = {};
+            const daftarCabangResmi = Object.keys(geoMapping);
+
+            rawRiskData.forEach((row) => {
+                let cleanedRow = {};
+                Object.keys(row).forEach(k => {
+                    if (k) cleanedRow[k.trim().toLowerCase()] = row[k];
+                });
+
+                let csvUkerRaw = cleanedRow['cabang_mapping'] || cleanedRow['cabang'] || cleanedRow['uker'];
+                if (!csvUkerRaw) return;
+
+                let csvUkerName = String(csvUkerRaw).toUpperCase().trim();
+                
+                let ukerName = daftarCabangResmi.find(cabangResmi => {
+                    let namaBersihResmi = cabangResmi.replace("CB ", "").replace("KK ", "").trim();
+                    return cabangResmi === csvUkerName || 
+                           namaBersihResmi === csvUkerName || 
+                           csvUkerName.includes(namaBersihResmi) || 
+                           namaBersihResmi.includes(csvUkerName);
+                });
+
+                if (!ukerName) return;
+
+                let totalNoaAktif = parseInt(cleanedRow['total_noa_aktif'] || 0);
+                let totalOsAktif = parseFloat(cleanedRow['total_os_aktif'] || 0);
+                let noaDpk = parseInt(cleanedRow['noa_dpk'] || 0);
+                let noaNpl = parseInt(cleanedRow['noa_npl'] || 0);
+                let osDpk = parseFloat(cleanedRow['os_dpk'] || 0);
+                let osNpl = parseFloat(cleanedRow['os_npl'] || 0);
+
+                if (!ukerAggregated[ukerName]) {
+                    ukerAggregated[ukerName] = { total_noa: 0, total_os: 0, os_dpk: 0, os_npl: 0, noa_dpk: 0, noa_npl: 0 };
+                }
+
+                ukerAggregated[ukerName].total_noa += totalNoaAktif;
+                ukerAggregated[ukerName].total_os += totalOsAktif;
+                ukerAggregated[ukerName].noa_dpk += noaDpk;
+                ukerAggregated[ukerName].noa_npl += noaNpl;
+                ukerAggregated[ukerName].os_dpk += osDpk;
+                ukerAggregated[ukerName].os_npl += osNpl;
+            });
+
+            let nasTotalOS = 0, nasTotalNPL = 0, nasTotalDPK = 0, nasTotalNoa = 0, nasTotalNoaBermasalah = 0;
+            Object.keys(ukerAggregated).forEach(key => {
+                nasTotalOS += ukerAggregated[key].total_os;
+                nasTotalNPL += ukerAggregated[key].os_npl;
+                nasTotalDPK += ukerAggregated[key].os_dpk;
+                nasTotalNoa += ukerAggregated[key].total_noa;
+                nasTotalNoaBermasalah += (ukerAggregated[key].noa_dpk + ukerAggregated[key].noa_npl);
+            });
+
+            let targetTotalOS = selectedUker === 'ALL' ? nasTotalOS : ukerAggregated[selectedUker]?.total_os || 0;
+            let targetNPL = selectedUker === 'ALL' ? nasTotalNPL : ukerAggregated[selectedUker]?.os_npl || 0;
+            let targetDPK = selectedUker === 'ALL' ? nasTotalDPK : ukerAggregated[selectedUker]?.os_dpk || 0;
+            let targetTotalNoa = selectedUker === 'ALL' ? nasTotalNoa : ukerAggregated[selectedUker]?.total_noa || 0;
+            let targetNoaBermasalah = selectedUker === 'ALL' ? nasTotalNoaBermasalah : ((ukerAggregated[selectedUker]?.noa_dpk || 0) + (ukerAggregated[selectedUker]?.noa_npl || 0));
+
+            let rasioNplPersen = targetTotalOS > 0 ? (targetNPL / targetTotalOS) * 100 : 0;
+            let rasioNoaBermasalah = targetTotalNoa > 0 ? (targetNoaBermasalah / targetTotalNoa) * 100 : 0;
+
+            // Suntik data ke panel UI Baru
+            document.getElementById('rasio-dpk-pct').innerText = rasioNoaBermasalah.toFixed(2) + "%";
+            document.getElementById('detail-noa-bermasalah').innerText = targetNoaBermasalah.toLocaleString('id-ID') + " NOA";
+            document.getElementById('detail-noa-aktif').innerText = targetTotalNoa.toLocaleString('id-ID') + " NOA";
+
+            document.getElementById('rasio-npl-pct').innerText = rasioNplPersen.toFixed(2) + "%";
+            document.getElementById('detail-os-npl').innerText = formatRupiah(targetNPL);
+            document.getElementById('detail-os-aktif').innerText = formatRupiah(targetTotalOS);
+            document.getElementById('detail-os-dpk-info').innerText = "*OS DPK (Waspada): " + formatRupiah(targetDPK);
+            
+            document.getElementById('total-tunggakan-val').innerText = formatRupiah(targetNPL);
+
+            // Indikator Penilaian Kepatuhan Batas Atas OJK (5.00%)
+            const ojkBadge = document.getElementById('ojk-status');
+            if (rasioNplPersen > 5.0) {
+                ojkBadge.innerText = "❌ MELEBIHI BATAS AMAN OJK (>5%)";
+                ojkBadge.style.cssText = "font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-top: 2px; background: #fff5f5; color: #c0392b; border: 1px solid #c0392b;";
+            } else {
+                ojkBadge.innerText = "✅ AMAN SESUAI STANDAR OJK (≤5%)";
+                ojkBadge.style.cssText = "font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-top: 2px; background: #f0fdf4; color: #15803d; border: 1px solid #16a34a;";
+            }
+
+            renderRiskMapLayers(ukerAggregated, selectedUker);
+            renderRiskBarChart(ukerAggregated);
+            renderBranchList(ukerAggregated, selectedUker);
+
+            if (selectedUker !== 'ALL' && geoMapping[selectedUker]) {
+                map.setView([geoMapping[selectedUker].lat, geoMapping[selectedUker].lng], 9, { animate: true, duration: 1.2 });
+            }
+        }
+
+        function renderRiskMapLayers(ukerStats, selectedUker) {
+            branchesLayer.clearLayers();
+
+            Object.keys(geoMapping).forEach(name => {
+                if (selectedUker !== 'ALL' && name !== selectedUker) return;
+
+                const data = ukerStats[name] || { total_os: 0, os_dpk: 0, os_npl: 0, noa_dpk: 0, noa_npl: 0 };
+                let porsiNplPersen = data.total_os > 0 ? (data.os_npl / data.total_os) * 100 : 0;
+                let porsiDpkPersen = data.total_os > 0 ? (data.os_dpk / data.total_os) * 100 : 0;
+
+                let riskClass = "risk-safe";
+                if (porsiNplPersen > 5.0) riskClass = "risk-critical"; 
+                else if (porsiNplPersen >= 2.0) riskClass = "risk-warning";
+
+                const popupHTML = `
+                    <div style="font-family: sans-serif; width: 250px; margin:-5px;">
+                        <div style="background: #e53e3e; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
+                            🏢 PROFILE RISK: ${name}
+                        </div>
+                        <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 0 0 6px 6px;">
+                            <div style="margin-bottom: 6px;">
+                                <small style="color:#888; font-size:9px; font-weight:bold;">TOTAL OS AKTIF</small><br>
+                                <span style="font-size:13px; font-weight:bold; color:#2c3e50;">${formatRupiah(data.total_os)}</span>
+                            </div>
+                            <div style="margin-bottom: 6px; border-left: 3px solid #e67e22; padding-left: 6px;">
+                                <small style="color:#888; font-size:9px; font-weight:bold;">OS DPK (PERHATIAN KHUSUS)</small><br>
+                                <span style="font-size:12px; font-weight:bold; color:#e67e22;">${formatRupiah(data.os_dpk)} <span style="font-size:10px; color:#555;">(${porsiDpkPersen.toFixed(2)}%)</span></span>
+                            </div>
+                            <div style="margin-bottom: 6px; border-left: 3px solid #c0392b; padding-left: 6px;">
+                                <small style="color:#888; font-size:9px; font-weight:bold;">OS NPL (MACET/BERMASALAH)</small><br>
+                                <span style="font-size:12px; font-weight:bold; color:#c0392b;">${formatRupiah(data.os_npl)} <span style="font-size:10px; color:#555;">(${porsiNplPersen.toFixed(2)}%)</span></span>
+                            </div>
+                            <div style="border-top:1px solid #eee; padding-top:5px; margin-top:5px; font-size:10px; color:#7f8c8d; font-weight:bold;">
+                                👥 REKENING BERMASALAH: ${(data.noa_dpk + data.noa_npl)} NOA
+                            </div>
+                        </div>
+                    </div>`;
+
+                const markerHTML = `<div class="pulse-marker ${riskClass}"></div>`;
+                const riskIcon = L.divIcon({ className: 'custom-risk-icon', html: markerHTML, iconSize: [16, 16], iconAnchor: [8, 8] });
+                
+                const marker = L.marker([geoMapping[name].lat, geoMapping[name].lng], { icon: riskIcon }).addTo(branchesLayer);
+                marker.bindPopup(popupHTML, { offset: L.point(0, -12) });
+
+                if (selectedUker === name) {
+                    setTimeout(() => { marker.openPopup(); }, 400);
+                }
+            });
+        }
+
+        // IMPROVEMENT: Horizontal Bar Chart Elegan
+        function renderRiskBarChart(ukerStats) {
+            let sortedRiskUker = Object.keys(ukerStats).map(name => {
+                return { name: name, npl: ukerStats[name].os_npl };
+            }).sort((a, b) => b.npl - a.npl).slice(0, 5);
+
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            if (barChartRisk) barChartRisk.destroy();
+
+            const elegantColors = ['#c0392b', '#e67e22', '#f1c40f', '#34495e', '#7f8c8d'];
+
+            barChartRisk = new Chart(ctx, {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: sortedRiskUker.map(item => item.name.replace("CB ", "").replace("KK ", "")),
+                    datasets: [{
+                        data: sortedRiskUker.map(item => item.npl / 1e9), 
+                        backgroundColor: elegantColors,
+                        borderRadius: 4, 
+                        barThickness: 16 
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 45, left: 5 } },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'right', 
+                            color: '#333', 
+                            font: { weight: 'bold', size: 10, family: 'sans-serif' }, 
+                            formatter: (val) => val > 0 ? val.toFixed(1) + 'M' : '0M' 
+                        }
+                    },
+                    scales: {
+                        x: { display: false, grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold', family: 'sans-serif' }, color: '#2c3e50' } }
+                    }
+                }
+            });
+        }
+
+        // IMPROVEMENT: Breakdown Detail List Dinamis per Cabang beserta Rasionya
+        function renderBranchList(ukerStats, selectedUker) {
+            const container = document.getElementById('redzone-company-list');
+            container.innerHTML = "";
+
+            let listData = Object.keys(ukerStats).map(name => {
+                return { name: name, ...ukerStats[name] };
+            }).sort((a, b) => b.os_npl - a.os_npl);
+
+            if (selectedUker !== 'ALL') {
+                listData = listData.filter(item => item.name === selectedUker);
+            }
+
+            listData.forEach(branch => {
+                let rasioNpl = branch.total_os > 0 ? (branch.os_npl / branch.total_os) * 100 : 0;
+                let rasioDpk = branch.total_os > 0 ? (branch.os_dpk / branch.total_os) * 100 : 0;
+
+                let row = document.createElement('div');
+                row.style.cssText = "padding: 10px 4px; border-bottom: 1px solid #eee; font-size:11px; line-height: 1.4;";
+                row.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:#2c3e50; margin-bottom: 2px;">
+                        <span>🏢 ${branch.name}</span>
+                        <span style="color:#7f8c8d; font-size: 10px;">Total OS: ${formatRupiah(branch.total_os)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px;">
+                        <span style="color:#c0392b; font-weight:600;">⚠️ NPL: ${formatRupiah(branch.os_npl)} <strong>(${rasioNpl.toFixed(2)}%)</strong></span>
+                        <span style="color:#e67e22; font-weight:600;">🔸 DPK: ${formatRupiah(branch.os_dpk)} <strong>(${rasioDpk.toFixed(2)}%)</strong></span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        initRiskDashboard();
     </script>
 </body>
 </html>
