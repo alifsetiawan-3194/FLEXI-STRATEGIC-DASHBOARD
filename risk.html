@@ -77,6 +77,15 @@
         }
         .ratio-label { font-size: 10px; color: #95a5a6; font-weight: bold; margin-bottom: 4px; }
         .ratio-num { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        
+        /* Modifikasi grid untuk data WO */
+        .wo-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+        }
+        .wo-card {
+            background: #f8fafc; border: 1px dashed #cbd5e1; padding: 8px; border-radius: 6px;
+        }
+
         .tunggakan-wrapper {
             background: #fff5f5; padding: 12px; border-radius: 6px;
             border-left: 4px solid #e53e3e; text-align: left;
@@ -140,8 +149,19 @@
             </div>
             
             <div class="tunggakan-wrapper">
-                <div class="ratio-label" style="color: #e53e3e;">TOTAL OUTSTANDING NPL</div>
+                <div class="ratio-label" style="color: #e53e3e;">TOTAL OUTSTANDING NPL AKTIF</div>
                 <div class="ratio-num" id="total-tunggakan-val" style="color: #cf2323; font-size: 20px;">Rp 0</div>
+            </div>
+
+            <div class="wo-grid">
+                <div class="wo-card">
+                    <div class="ratio-label" style="color: #64748b;">REKENING WO</div>
+                    <div class="ratio-num" id="detail-noa-wo" style="font-size: 14px; color: #334155;">0 NOA</div>
+                </div>
+                <div class="wo-card">
+                    <div class="ratio-label" style="color: #475569;">NOMINAL WO (OFF-BALANCE)</div>
+                    <div class="ratio-num" id="detail-os-wo" style="font-size: 14px; color: #0f172a;">Rp 0</div>
+                </div>
             </div>
         </div>
         
@@ -291,7 +311,6 @@
             processRiskData();
         }
 
-        // IMPROVEMENT: Fitur Live Search & Anti-Typo (Satu huruf 'S')
         document.getElementById('search-uker').addEventListener('input', function() {
             let filterText = this.value.toUpperCase().trim();
             let selectElement = document.getElementById('filter-uker');
@@ -344,7 +363,6 @@
             }
         });
 
-        // IMPROVEMENT: Proses & Perhitungan Dinamis Angka / Rasio Risiko
         function processRiskData() {
             const selectedUker = document.getElementById('filter-uker').value.toUpperCase().trim();
             let ukerAggregated = {};
@@ -377,9 +395,13 @@
                 let noaNpl = parseInt(cleanedRow['noa_npl'] || 0);
                 let osDpk = parseFloat(cleanedRow['os_dpk'] || 0);
                 let osNpl = parseFloat(cleanedRow['os_npl'] || 0);
+                
+                // Menerima data baru kolom WO (handling nama kolom flexible dari csv)
+                let noaWo = parseInt(cleanedRow['noa_npl_wo'] || cleanedRow['noa_wo'] || 0);
+                let osWo = parseFloat(cleanedRow['os_npl_wo'] || cleanedRow['os_os_wo'] || cleanedRow['noa_os_wo'] || cleanedRow['os_wo'] || 0);
 
                 if (!ukerAggregated[ukerName]) {
-                    ukerAggregated[ukerName] = { total_noa: 0, total_os: 0, os_dpk: 0, os_npl: 0, noa_dpk: 0, noa_npl: 0 };
+                    ukerAggregated[ukerName] = { total_noa: 0, total_os: 0, os_dpk: 0, os_npl: 0, noa_dpk: 0, noa_npl: 0, noa_wo: 0, os_wo: 0 };
                 }
 
                 ukerAggregated[ukerName].total_noa += totalNoaAktif;
@@ -388,15 +410,21 @@
                 ukerAggregated[ukerName].noa_npl += noaNpl;
                 ukerAggregated[ukerName].os_dpk += osDpk;
                 ukerAggregated[ukerName].os_npl += osNpl;
+                ukerAggregated[ukerName].noa_wo += noaWo;
+                ukerAggregated[ukerName].os_wo += osWo;
             });
 
             let nasTotalOS = 0, nasTotalNPL = 0, nasTotalDPK = 0, nasTotalNoa = 0, nasTotalNoaBermasalah = 0;
+            let nasTotalNoaWO = 0, nasTotalOsWO = 0;
+
             Object.keys(ukerAggregated).forEach(key => {
                 nasTotalOS += ukerAggregated[key].total_os;
                 nasTotalNPL += ukerAggregated[key].os_npl;
                 nasTotalDPK += ukerAggregated[key].os_dpk;
                 nasTotalNoa += ukerAggregated[key].total_noa;
                 nasTotalNoaBermasalah += (ukerAggregated[key].noa_dpk + ukerAggregated[key].noa_npl);
+                nasTotalNoaWO += ukerAggregated[key].noa_wo;
+                nasTotalOsWO += ukerAggregated[key].os_wo;
             });
 
             let targetTotalOS = selectedUker === 'ALL' ? nasTotalOS : ukerAggregated[selectedUker]?.total_os || 0;
@@ -404,11 +432,14 @@
             let targetDPK = selectedUker === 'ALL' ? nasTotalDPK : ukerAggregated[selectedUker]?.os_dpk || 0;
             let targetTotalNoa = selectedUker === 'ALL' ? nasTotalNoa : ukerAggregated[selectedUker]?.total_noa || 0;
             let targetNoaBermasalah = selectedUker === 'ALL' ? nasTotalNoaBermasalah : ((ukerAggregated[selectedUker]?.noa_dpk || 0) + (ukerAggregated[selectedUker]?.noa_npl || 0));
+            
+            let targetNoaWO = selectedUker === 'ALL' ? nasTotalNoaWO : ukerAggregated[selectedUker]?.noa_wo || 0;
+            let targetOsWO = selectedUker === 'ALL' ? nasTotalOsWO : ukerAggregated[selectedUker]?.os_wo || 0;
 
             let rasioNplPersen = targetTotalOS > 0 ? (targetNPL / targetTotalOS) * 100 : 0;
             let rasioNoaBermasalah = targetTotalNoa > 0 ? (targetNoaBermasalah / targetTotalNoa) * 100 : 0;
 
-            // Suntik data ke panel UI Baru
+            // Suntik data ke panel UI
             document.getElementById('rasio-dpk-pct').innerText = rasioNoaBermasalah.toFixed(2) + "%";
             document.getElementById('detail-noa-bermasalah').innerText = targetNoaBermasalah.toLocaleString('id-ID') + " NOA";
             document.getElementById('detail-noa-aktif').innerText = targetTotalNoa.toLocaleString('id-ID') + " NOA";
@@ -419,6 +450,10 @@
             document.getElementById('detail-os-dpk-info').innerText = "*OS DPK (Waspada): " + formatRupiah(targetDPK);
             
             document.getElementById('total-tunggakan-val').innerText = formatRupiah(targetNPL);
+
+            // Injeksi data WO Baru ke Elemen Card Baru
+            document.getElementById('detail-noa-wo').innerText = targetNoaWO.toLocaleString('id-ID') + " NOA";
+            document.getElementById('detail-os-wo').innerText = formatRupiah(targetOsWO);
 
             // Indikator Penilaian Kepatuhan Batas Atas OJK (5.00%)
             const ojkBadge = document.getElementById('ojk-status');
@@ -445,7 +480,7 @@
             Object.keys(geoMapping).forEach(name => {
                 if (selectedUker !== 'ALL' && name !== selectedUker) return;
 
-                const data = ukerStats[name] || { total_os: 0, os_dpk: 0, os_npl: 0, noa_dpk: 0, noa_npl: 0 };
+                const data = ukerStats[name] || { total_os: 0, os_dpk: 0, os_npl: 0, noa_dpk: 0, noa_npl: 0, noa_wo: 0, os_wo: 0 };
                 let porsiNplPersen = data.total_os > 0 ? (data.os_npl / data.total_os) * 100 : 0;
                 let porsiDpkPersen = data.total_os > 0 ? (data.os_dpk / data.total_os) * 100 : 0;
 
@@ -453,6 +488,7 @@
                 if (porsiNplPersen > 5.0) riskClass = "risk-critical"; 
                 else if (porsiNplPersen >= 2.0) riskClass = "risk-warning";
 
+                // Map Popup disesuaikan dengan penambahan Data WO
                 const popupHTML = `
                     <div style="font-family: sans-serif; width: 250px; margin:-5px;">
                         <div style="background: #e53e3e; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 11px;">
@@ -464,15 +500,19 @@
                                 <span style="font-size:13px; font-weight:bold; color:#2c3e50;">${formatRupiah(data.total_os)}</span>
                             </div>
                             <div style="margin-bottom: 6px; border-left: 3px solid #e67e22; padding-left: 6px;">
-                                <small style="color:#888; font-size:9px; font-weight:bold;">OS DPK (PERHATIAN KHUSUS)</small><br>
+                                <small style="color:#888; font-size:9px; font-weight:bold;">OS DPK (WATCHLIST)</small><br>
                                 <span style="font-size:12px; font-weight:bold; color:#e67e22;">${formatRupiah(data.os_dpk)} <span style="font-size:10px; color:#555;">(${porsiDpkPersen.toFixed(2)}%)</span></span>
                             </div>
                             <div style="margin-bottom: 6px; border-left: 3px solid #c0392b; padding-left: 6px;">
-                                <small style="color:#888; font-size:9px; font-weight:bold;">OS NPL (MACET/BERMASALAH)</small><br>
+                                <small style="color:#888; font-size:9px; font-weight:bold;">OS NPL (AKTIF BERMASALAH)</small><br>
                                 <span style="font-size:12px; font-weight:bold; color:#c0392b;">${formatRupiah(data.os_npl)} <span style="font-size:10px; color:#555;">(${porsiNplPersen.toFixed(2)}%)</span></span>
                             </div>
+                            <div style="margin-bottom: 4px; border-left: 3px dashed #64748b; padding-left: 6px; background: #f8fafc;">
+                                <small style="color:#64748b; font-size:9px; font-weight:bold;">OS WRITE-OFF (HAPUS BUKU)</small><br>
+                                <span style="font-size:11px; font-weight:bold; color:#334155;">${formatRupiah(data.os_wo)} <span style="font-size:9px; color:#64748b;">(${data.noa_wo} NOA)</span></span>
+                            </div>
                             <div style="border-top:1px solid #eee; padding-top:5px; margin-top:5px; font-size:10px; color:#7f8c8d; font-weight:bold;">
-                                👥 REKENING BERMASALAH: ${(data.noa_dpk + data.noa_npl)} NOA
+                                👥 NOA BERMASALAH AKTIF: ${(data.noa_dpk + data.noa_npl)} NOA
                             </div>
                         </div>
                     </div>`;
@@ -489,7 +529,6 @@
             });
         }
 
-        // IMPROVEMENT: Horizontal Bar Chart Elegan
         function renderRiskBarChart(ukerStats) {
             let sortedRiskUker = Object.keys(ukerStats).map(name => {
                 return { name: name, npl: ukerStats[name].os_npl };
@@ -534,7 +573,6 @@
             });
         }
 
-        // IMPROVEMENT: Breakdown Detail List Dinamis per Cabang beserta Rasionya
         function renderBranchList(ukerStats, selectedUker) {
             const container = document.getElementById('redzone-company-list');
             container.innerHTML = "";
@@ -558,9 +596,12 @@
                         <span>🏢 ${branch.name}</span>
                         <span style="color:#7f8c8d; font-size: 10px;">Total OS: ${formatRupiah(branch.total_os)}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; font-size:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom: 1px;">
                         <span style="color:#c0392b; font-weight:600;">⚠️ NPL: ${formatRupiah(branch.os_npl)} <strong>(${rasioNpl.toFixed(2)}%)</strong></span>
                         <span style="color:#e67e22; font-weight:600;">🔸 DPK: ${formatRupiah(branch.os_dpk)} <strong>(${rasioDpk.toFixed(2)}%)</strong></span>
+                    </div>
+                    <div style="font-size: 9.5px; color:#64748b; font-style: italic;">
+                        📋 Hapus Buku (WO): ${formatRupiah(branch.os_wo)} <span style="color: #94a3b8;">(${branch.noa_wo} Rekening)</span>
                     </div>
                 `;
                 container.appendChild(row);
