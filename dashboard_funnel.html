@@ -3,214 +3,419 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Funnel Pinang Flexi</title>
+  <title>Bank Raya - Wide 5-Column Clean Funnel</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 sm:p-6 lg:p-8">
-
-  <div class="max-w-7xl mx-auto">
+  <style>
+    body {
+      background-color: #f4f7fa;
+      background-image: 
+        radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
+        radial-gradient(rgba(0, 82, 156, 0.04) 1.5px, transparent 1.5px);
+      background-size: 100% 100%, 20px 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .main-pipeline-card {
+      background: linear-gradient(135deg, #00529C 0%, #003e77 100%);
+      box-shadow: 0 4px 10px -2px rgba(0, 82, 156, 0.15);
+    }
+    .final-pipeline-card {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      box-shadow: 0 4px 10px -2px rgba(5, 150, 105, 0.15);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
-          <i class="fa-solid fa-chart-nodes text-blue-500"></i> Funnel Pinang Flexi
-        </h1>
-        <p class="text-sm text-slate-400 mt-1">Monitoring real-time alur konversi pengajuan, verifikasi payroll, hingga pencairan kredit.</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700">Periode: 22 Juni 2026 - 28 Juni 2026</span>
-      </div>
-    </div>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.12s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen p-4 flex flex-col gap-3 overflow-hidden box-border text-slate-700">
 
-    <div class="mb-8 overflow-x-auto pb-4">
-      <div class="flex items-start gap-4 min-w-[1200px]">
-        
-        <div class="flex-1 min-w-[220px]">
-          <div class="bg-blue-600 p-4 rounded-xl shadow-lg border border-blue-500 relative mb-4">
-            <div class="text-xs font-bold text-blue-100 uppercase tracking-wider mb-1">100%</div>
-            <div class="text-sm font-black text-white">APP_CREATED</div>
-            <div class="text-2xl font-bold text-white mt-2">10.749 <span class="text-xs font-normal opacity-70">Apps</span></div>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-red-400 mb-0.5"><span>APP_EXPIRED</span><span>0.02%</span></div>
-              <div class="text-slate-400">2 Kasus (Inquiry saca / cif)</div>
-            </div>
-          </div>
+  <div class="w-full bg-white border border-slate-200/80 rounded-2xl px-6 py-2.5 flex justify-between items-center shadow-xs shrink-0">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-3 border-r border-slate-200 pr-4">
+        <div class="bg-blue-50 p-1.5 rounded-xl text-[#00529C] border border-blue-100">
+          <i class="fa-solid fa-chart-line text-base"></i>
         </div>
-
-        <div class="flex items-center justify-center pt-8 text-slate-600"><i class="fa-solid fa-chevron-right text-lg"></i></div>
-
-        <div class="flex-1 min-w-[230px]">
-          <div class="bg-blue-600 p-4 rounded-xl shadow-lg border border-blue-500 relative mb-4">
-            <div class="text-xs font-bold text-blue-100 uppercase tracking-wider mb-1">44.73%</div>
-            <div class="text-sm font-black text-white">PAYROLL_APP</div>
-            <div class="text-2xl font-bold text-white mt-2">4.808 <span class="text-xs font-normal opacity-70">Apps</span></div>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-red-400 mb-0.5"><span>PAYROLL_REJ</span><span>55.25%</span></div>
-              <div class="text-slate-200 font-medium mb-1">5.939 Kasus</div>
-              <div class="text-[11px] text-slate-400 space-y-1">
-                <div class="flex justify-between"><span>• Gagal Screening</span><span>34.17%</span></div>
-                <div class="flex justify-between"><span>• WL Tdk Terdaftar</span><span>21.08%</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-center pt-8 text-slate-600"><i class="fa-solid fa-chevron-right text-lg"></i></div>
-
-        <div class="flex-1 min-w-[220px]">
-          <div class="bg-blue-700 p-4 rounded-xl shadow-lg border border-blue-600 relative mb-4">
-            <div class="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">40.15%</div>
-            <div class="text-sm font-black text-white">CREDIT_SCORE_SUB</div>
-            <div class="text-2xl font-bold text-white mt-2">4.316 <span class="text-xs font-normal opacity-70">Apps</span></div>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-orange-500/10 border border-orange-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-orange-400"><span>APP_EXPIRED</span><span>4.58%</span></div>
-              <div class="text-slate-400 mt-0.5">492 Kasus</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-center pt-8 text-slate-600"><i class="fa-solid fa-chevron-right text-lg"></i></div>
-
-        <div class="flex-1 min-w-[230px]">
-          <div class="bg-blue-700 p-4 rounded-xl shadow-lg border border-blue-600 relative mb-4">
-            <div class="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">10.94%</div>
-            <div class="text-sm font-black text-white">CREDIT_SCORE_APR</div>
-            <div class="text-2xl font-bold text-white mt-2">1.176 <span class="text-xs font-normal opacity-70">Apps</span></div>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-red-400 mb-0.5"><span>CREDIT_SCORE_REJ</span><span>26.59%</span></div>
-              <div class="text-slate-200 font-medium mb-1">2.858 Kasus</div>
-              <div class="text-[11px] text-slate-400 space-y-0.5">
-                <div class="flex justify-between"><span>• SLIK Rejection</span><span>21.87%</span></div>
-                <div class="flex justify-between"><span>• SICD BRI</span><span>0.29%</span></div>
-                <div class="flex justify-between"><span>• Other Reasons</span><span>4.42%</span></div>
-              </div>
-            </div>
-            <div class="bg-orange-500/10 border border-orange-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-orange-400"><span>APP_EXPIRED</span><span>2.62%</span></div>
-              <div class="text-slate-400 mt-0.5">282 Kasus</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-center pt-8 text-slate-600"><i class="fa-solid fa-chevron-right text-lg"></i></div>
-
-        <div class="flex-1 min-w-[240px]">
-          <div class="bg-emerald-600 p-4 rounded-xl shadow-lg border border-emerald-500 relative mb-4">
-            <div class="text-xs font-bold text-emerald-100 uppercase tracking-wider mb-1">7.28% (Final)</div>
-            <div class="text-sm font-black text-white">LOAN_CREATED</div>
-            <div class="text-2xl font-bold text-white mt-2">782 <span class="text-xs font-normal opacity-70">Loans</span></div>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-red-400"><span>KTP_REJ (Foto Buram)</span><span>2.17%</span></div>
-              <div class="text-slate-400 mt-0.5">233 Kasus</div>
-            </div>
-            <div class="bg-orange-500/10 border border-orange-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-orange-400"><span>USR_REJ (Dibatalkan)</span><span>0.97%</span></div>
-              <div class="text-slate-400 mt-0.5">104 Kasus</div>
-            </div>
-            <div class="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg text-xs">
-              <div class="flex justify-between font-bold text-amber-400"><span>DISB_ACC_CONF (Gagal)</span><span>0.49%</span></div>
-              <div class="text-slate-400 mt-0.5">53 Kasus (Face Match)</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <div class="lg:col-span-1 bg-slate-800/60 rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
         <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2 mb-4">
-            <i class="fa-solid fa-list-check text-blue-400"></i> Key Highlight (Slide Sync)
-          </h2>
-          <div class="space-y-4 text-xs leading-relaxed text-slate-300">
-            <div>
-              <span class="font-bold text-white block mb-0.5">1. APP_CREATED (app_expired)</span>
-              <p>Kendala pada tahap application inquiry. Catatan utama berada saat melakukan proses inquiry saca atau cif.</p>
-            </div>
-            <div class="border-t border-slate-700/50 pt-2">
-              <span class="font-bold text-white block mb-0.5">2. PAYROLL_APP (app_expired)</span>
-              <p>Kendala pada proses pengisian data dan inquiry data cif. Data pengajuan gagal diproses masuk ke scoring akibat berkas tidak lengkap.</p>
-            </div>
-            <div class="border-t border-slate-700/50 pt-2">
-              <span class="font-bold text-white block mb-0.5">3. KTP_REJ</span>
-              <p>Penawaran credit tidak diterima/ditolak atau foto KTP direject otomatis karena hasil tangkapan kamera tidak jelas atau data tidak sesuai NIK pada CIF.</p>
-            </div>
-            <div class="border-t border-slate-700/50 pt-2">
-              <span class="font-bold text-white block mb-0.5">4. DISB_ACC_CONF & DOCUMENT_SIGN</span>
-              <p>Verifikasi demografi atau face match gagal. Jika proses tanda tangan digital gagal, saat ini user dipaksa melakukan pengajuan ulang dari awal.</p>
-            </div>
-          </div>
+          <h1 class="text-xs font-black text-slate-800 tracking-tight">Pinang Flexi</h1>
+          <p class="text-[9px] text-slate-400 font-semibold tracking-wide">Data Control Dashboard</p>
         </div>
       </div>
 
-      <div class="lg:col-span-2 bg-gradient-to-br from-slate-800/80 to-slate-900/40 rounded-2xl p-6 border border-slate-800">
-        <h2 class="text-base font-bold text-white flex items-center gap-2 mb-4">
-          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Actionable Insights (Apa yang Perlu Kita Lakuin?)
-        </h2>
+      <nav class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200/60">
+        <a href="index.html" class="flex items-center gap-1.5 px-3 py-0.5 rounded-lg text-[10px] font-bold text-slate-500 hover:text-slate-800 hover:bg-white/60 transition-all">
+          <i class="fa-solid fa-rocket text-slate-400 text-[9px]"></i> PERFORMANCE SALES
+        </a>
+        <a href="risk.html" class="flex items-center gap-1.5 px-3 py-0.5 rounded-lg text-[10px] font-bold text-slate-500 hover:text-slate-800 hover:bg-white/60 transition-all">
+          <i class="fa-solid fa-shield-halved text-slate-400 text-[9px]"></i> DPK & NPL RISK
+        </a>
+        <a href="#" class="flex items-center gap-1.5 px-3 py-0.5 rounded-lg text-[10px] font-black bg-[#00529C] text-white shadow-xs border border-blue-900/10">
+          <i class="fa-solid fa-filter text-[9px]"></i> FUNNEL ANALYSIS
+        </a>
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-6">
+      <div class="text-right border-r border-slate-200 pr-6">
+        <span class="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Total Inbound Cases</span>
+        <span id="total-inbound-text" class="text-sm font-black text-[#00529C] tracking-wide">0 <span class="text-[10px] text-orange-500 font-semibold ml-1"><i class="fa-solid fa-arrow-trend-up"></i> Base</span></span>
+      </div>
+      <span class="text-orange-500 font-black text-base tracking-tighter">DARK <span class="text-[#00529C]">SYSTEM</span></span>
+    </div>
+  </div>
+
+  <div class="w-full flex-1 flex gap-4 overflow-hidden min-h-0">
+    
+    <div class="w-[78%] bg-white rounded-2xl border border-slate-200 p-4 flex flex-col relative shadow-xs h-full overflow-hidden">
+      <svg id="pipeline-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0"></svg>
+      
+      <div id="pipeline-flow" class="absolute inset-0 flex flex-col gap-y-12 p-5 z-10 justify-start overflow-hidden">
+        </div>
+    </div>
+
+    <div class="w-[22%] bg-white rounded-2xl border border-slate-200 p-4 flex flex-col shadow-xs overflow-hidden shrink-0">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-orange-500 text-xs"></i>
+          <h3 class="text-[11px] font-black text-slate-700 uppercase tracking-wider">Operational Insights</h3>
+        </div>
+        <span class="text-[8px] bg-orange-50 text-orange-600 border border-orange-100 px-1.5 py-0.5 font-bold rounded">Live Logs</span>
+      </div>
+      
+      <div class="space-y-2 text-[10px] text-slate-500 leading-relaxed overflow-y-auto flex-1 pr-1 no-scrollbar">
+        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200/70 hover:border-blue-400 hover:bg-white transition-all shadow-2xs group">
+          <span class="font-bold text-slate-800 block mb-0.5 flex items-center gap-1.5 group-hover:text-[#00529C]">
+            <span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>
+            PAYROLL_REJ Spike
+          </span>
+          <p class="text-[9.5px] text-slate-400 font-medium">Volumetri kegagalan tertinggi ditemukan pada sektor pemrosesan pre-screening payroll kriteria institusi kerja mitra.</p>
+        </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-            <div class="text-red-400 text-base bg-red-500/10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-server"></i>
-            </div>
-            <div>
-              <h3 class="text-xs font-bold text-white mb-1">Optimasi Sistem & Whitelist Checking</h3>
-              <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Kebocoran terbesar ada di <span class="text-red-400 font-medium">PAYROLL_REJ (5.939 kasus)</span>. Sebanyak 21.08% gagal karena WL Tidak Terdaftar. Perlu koordinasi integrasi data master karyawan.</p>
-              <span class="inline-block text-[10px] font-medium bg-red-500/10 text-red-400 px-2 py-0.5 rounded">Prioritas: Critical System</span>
-            </div>
-          </div>
+        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200/70 hover:border-orange-400 hover:bg-white transition-all shadow-2xs group">
+          <span class="font-bold text-slate-800 block mb-0.5 flex items-center gap-1.5 group-hover:text-orange-600">
+            <span class="h-1.5 w-1.5 rounded-full bg-orange-400 inline-block"></span>
+            CR_SCORE_REJ Reject Rate
+          </span>
+          <p class="text-[9.5px] text-slate-400 font-medium">Penolakan masif dari scoring engine akibat kolektibilitas data histori SLIK buruk di luar batas risk appetite.</p>
+        </div>
 
-          <div class="flex gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-            <div class="text-amber-400 text-base bg-amber-500/10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-camera"></i>
-            </div>
-            <div>
-              <h3 class="text-xs font-bold text-white mb-1">Perbaikan Fitur OCR & Panduan KTP</h3>
-              <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Sebanyak <span class="text-amber-400 font-medium">233 berkas (2.17%)</span> tertahan di KTP_REJ. UI aplikasi perlu ditambah kerangka penempatan kamera otomatis (auto-capture) agar foto tidak buram.</p>
-              <span class="inline-block text-[10px] font-medium bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded">Prioritas: UX Improvement</span>
-            </div>
-          </div>
-
-          <div class="flex gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-            <div class="text-blue-400 text-base bg-blue-500/10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-rotate-left"></i>
-            </div>
-            <div>
-              <h3 class="text-xs font-bold text-white mb-1">Mekanisme Recovery Tanda Tangan</h3>
-              <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Saat tanda tangan digital gagal, user harus mengulang dari nol. Dashboard mengusulkan fitur <span class="text-blue-400 font-medium">"Resume Application"</span> khusus tahap akhir.</p>
-              <span class="inline-block text-[10px] font-medium bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">Target: Mengurangi USR_REJECT</span>
-            </div>
-          </div>
-
-          <div class="flex gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-            <div class="text-purple-400 text-base bg-purple-500/10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-            </div>
-            <div>
-              <h3 class="text-xs font-bold text-white mb-1">Evaluasi Durasi Masa Kedaluwarsa Engine</h3>
-              <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Terdapat penumpukan status <span class="text-purple-400 font-medium">app_expired (492 & 282 kasus)</span> saat verifikasi scoring berjalan. Perlu cek latensi pengiriman antrean data ke biro.</p>
-              <span class="inline-block text-[10px] font-medium bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded">Target: Memangkas Latency Scoring</span>
-            </div>
-          </div>
+        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200/70 hover:border-blue-500/40 hover:bg-white transition-all shadow-2xs group">
+          <span class="font-bold text-slate-800 block mb-0.5 flex items-center gap-1.5 group-hover:text-[#00529C]">
+            <span class="h-1.5 w-1.5 rounded-full bg-blue-600 inline-block"></span>
+            OCR & KTP Validation
+          </span>
+          <p class="text-[9.5px] text-slate-400 font-medium">Tahapan verifikasi awal identitas menyaring kegagalan ekstraksi metadata string dari foto fisik buram.</p>
         </div>
       </div>
-
     </div>
 
   </div>
 
+  <script>
+    function parseCSV(text) {
+      const lines = text.split(/\r?\n/);
+      if (lines.length === 0 || lines[0].trim() === "") return [];
+      const headers = lines[0].split(',').map(h => h.replace(/["\']/g, "").trim().toLowerCase());
+      const result = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        let row = [], insideQuote = false, entry = "";
+        for (let j = 0; j < lines[i].length; j++) {
+          let char = lines[i][j];
+          if (char === '"' || char === "'") insideQuote = !insideQuote;
+          else if (char === ',' && !insideQuote) { row.push(entry.trim()); entry = ""; }
+          else entry += char;
+        }
+        row.push(entry.trim());
+        const obj = {};
+        headers.forEach((header, index) => {
+          let val = row[index] ? row[index].replace(/["\']/g, "") : "";
+          obj[header] = val === "NULL" || val === "" ? null : val;
+        });
+        result.push(obj);
+      }
+      return result;
+    }
+
+    function initPipelineDashboard() {
+      fetch('funnel_data.csv')
+        .then(response => { if (!response.ok) throw new Error("Fallback active."); return response.text(); })
+        .then(csvText => processAndBuildDashboard(parseCSV(csvText)))
+        .catch(() => processAndBuildDashboard([]));
+    }
+
+    function processAndBuildDashboard(rows) {
+      let totalInbound = rows.length > 0 ? rows.length : 45902;
+      document.getElementById('total-inbound-text').innerHTML = `${Number(totalInbound).toLocaleString('id-ID')} <span class="text-xs text-orange-500 font-semibold ml-1"><i class="fa-solid fa-arrow-trend-up"></i> Base</span>`;
+
+      const statusCounts = {};
+      rows.forEach(r => { if(r.application_status) statusCounts[r.application_status] = (statusCounts[r.application_status] || 0) + 1; });
+
+      const pipelineData = [
+        {
+          id: "node-1", name: "1. APP_CREATED", 
+          count: rows.length > 0 ? (statusCounts["APP_CREATED"] || 0).toLocaleString('id-ID') : "8.749", rate: "100%",
+          drops: [{ name: "APP_EXPIRED", count: "45", pct: "0.10%", type: "orange", details: ["Sesi kedaluwarsa sebelum dilanjutkan user"] }]
+        },
+        {
+          id: "node-2", name: "2. PAYROLL_APP", 
+          count: rows.length > 0 ? (statusCounts["PAYROLL_APP"] || 0).toLocaleString('id-ID') : "1.060", rate: "11.53%",
+          drops: [
+            { name: "PAYROLL_REJ", count: "15.415", pct: "33.58%", type: "blue", isHighRisk: true, details: ["Kriteria Payroll Institusi Tidak Lolos Screening"] },
+            { name: "OCR_VER_FAIL|1", count: "38", pct: "0.08%", type: "orange", details: ["Gagal Ekstraksi OCR Tahap 1"] },
+            { name: "OCR_VER_FAIL|2", count: "24", pct: "0.05%", type: "orange", details: ["Gagal Validasi Atribut Metadata OCR Tahap 2"] }
+          ]
+        },
+        {
+          id: "node-3", name: "3. KTP_SAVED", 
+          count: rows.length > 0 ? (statusCounts["KTP_SAVED"] || 0).toLocaleString('id-ID') : "326", rate: "0.71%",
+          drops: [
+            { name: "PER_SAVED", count: "362", pct: "0.79%", type: "blue", details: ["Pengisian Data Personal Disimpan"] },
+            { name: "PAY_SAVED", count: "21", pct: "0.05%", type: "blue", details: ["Pengisian Data Rekening Tersendat"] },
+            { name: "CON_SAVED", count: "94", pct: "0.20%", type: "blue", details: ["Pengisian Kontak Darurat Tidak Lengkap"] }
+          ]
+        },
+        {
+          id: "node-4", name: "4. CR_SCORE_SUB", 
+          count: rows.length > 0 ? (statusCounts["CR_SCORE_SUB"] || 0).toLocaleString('id-ID') : "141", rate: "0.31%",
+          drops: [
+            { name: "CR_SCORE_REJ", count: "11.353", pct: "24.73%", type: "blue", isHighRisk: true, details: ["Ditolak Scoring Engine (SLIK Merah Kol 3-5)"] },
+            { name: "CR_SCORE_APR", count: "369", pct: "0.80%", type: "blue", details: ["Persetujuan Limit Alternatif Ditahan Komite"] },
+            { name: "KTP_VERIFIED", count: "2", pct: "0.01%", type: "orange", details: ["Data KTP Berhasil Diverifikasi Sistem"] },
+            { name: "USR_REJECT", count: "410", pct: "0.89%", type: "orange", details: ["User Batalkan Aplikasi Pasca Biometrik"] }
+          ]
+        },
+        {
+          id: "node-5", name: "5. DISB_ACC_CONF", 
+          count: rows.length > 0 ? (statusCounts["DISB_ACC_CONF"] || 0).toLocaleString('id-ID') : "244", rate: "0.53%",
+          drops: [
+            { name: "EKYC_COM", count: "85", pct: "0.19%", type: "blue", details: ["Proses Biometrik Verifikasi Selesai"] },
+            { name: "RE_EKYC", count: "12", pct: "0.03%", type: "blue", details: ["Trigger Request Ulang Biometrik Muka Terputus"] },
+            { name: "DIG_SIGN_COM", count: "9", pct: "0.02%", type: "blue", details: ["Tanda Tangan Digital Selesai / Timeout Vendor"] },
+            { name: "DOCUMENT_SIGNED", count: "33", pct: "0.07%", type: "blue", details: ["Dokumen Berhasil Ditandatangani Menunggu Antrean"] }
+          ]
+        },
+        {
+          id: "node-6", name: "6. DOCUMENT_SIGNED", 
+          count: "33", rate: "0.07%",
+          drops: [
+            { name: "PAID_SUP_FAILED", count: "1", pct: "0.00%", type: "orange", details: ["API Core System Supporter Bank Bermasalah"] },
+            { name: "PAID_SUP_SUCCESS", count: "32", pct: "0.07%", type: "blue", details: ["API Supporter Core Sukses Memvalidasi Dana"] },
+            { name: "DISB_IN_PROCESS", count: "15", pct: "0.03%", type: "blue", details: ["Pencairan Sedang Berjalan Antrean Interbank"] }
+          ]
+        },
+        {
+          id: "node-7", name: "7. LOAN_CREATED", 
+          count: rows.length > 0 ? (statusCounts["LOAN_CREATED"] || 0).toLocaleString('id-ID') : "7.215", rate: "15.72%",
+          isFinal: true,
+          drops: [{ name: "LOAN_PAID", count: "3", pct: "0.01%", type: "blue", details: ["Aplikasi Sukses Rekonsiliasi Angsuran Awal"] }]
+        }
+      ];
+
+      render5ColumnLayout(pipelineData);
+    }
+
+    function render5ColumnLayout(data) {
+      const container = document.getElementById('pipeline-flow');
+      container.innerHTML = '';
+
+      // BARU: Pembagian Layout Lurus (Baris 1: 5 Node, Baris 2: 2 Node)
+      const rowsData = [
+        { items: data.slice(0, 5) }, // Node 1, 2, 3, 4, 5
+        { items: data.slice(5, 7) }  // Node 6, 7
+      ];
+
+      rowsData.forEach(rowInfo => {
+        const rowDiv = document.createElement('div');
+        // Grid dikunci tepat 5 kolom agar posisi nomor 6 & 7 sejajar presisi di bawah nomor 1 & 2
+        rowDiv.className = `grid grid-cols-5 gap-4 items-start w-full`;
+        
+        rowInfo.items.forEach(col => {
+          rowDiv.appendChild(createNodeColumn(col));
+        });
+
+        // Stabilizer sisa slot grid kosong di baris ke-2
+        if(rowInfo.items.length < 5) {
+          for(let i=0; i < (5 - rowInfo.items.length); i++) {
+            const dummy = document.createElement('div');
+            dummy.className = "w-full min-w-0";
+            rowDiv.appendChild(dummy);
+          }
+        }
+        container.appendChild(rowDiv);
+      });
+
+      setTimeout(drawPremiumConnectors, 350);
+    }
+
+    function createNodeColumn(col) {
+      const colDiv = document.createElement('div');
+      colDiv.className = "flex flex-col items-center w-full min-w-0 justify-start text-[10px]";
+
+      let dropsHtml = '';
+      col.drops.forEach(drop => {
+        const isBlue = drop.type === 'blue';
+        const badgeBg = isBlue ? 'bg-blue-50 text-[#00529C] border border-blue-100/60' : 'bg-orange-50 text-orange-600 border border-orange-100/60';
+        const barBg = isBlue ? 'bg-[#00529C]' : 'bg-orange-500';
+        const alertBorder = drop.isHighRisk ? 'border-orange-300 bg-orange-50/30' : 'border-slate-100 bg-slate-50/30';
+        const detailsStr = encodeURIComponent(JSON.stringify(drop.details || []));
+
+        dropsHtml += `
+          <div class="w-full bg-white border ${alertBorder} rounded-lg px-1.5 py-1 hover:border-[#00529C] cursor-pointer transition-all relative group shadow-3xs"
+               onclick="showIssueBubble(event, '${drop.name}', '${detailsStr}')">
+            ${drop.isHighRisk ? '<span class="absolute -top-1 -right-1 bg-orange-500 text-white font-black text-[5.5px] px-1 rounded shadow-xs">SPIKE</span>' : ''}
+            <div class="flex justify-between items-center gap-1 mb-0.5">
+              <span class="text-[8.5px] font-bold text-slate-600 truncate group-hover:text-[#00529C]" title="${drop.name}">${drop.name}</span>
+              <span class="${badgeBg} text-[7.5px] font-bold px-1 py-0.2 rounded shrink-0">${drop.count}</span>
+            </div>
+            <div class="w-full bg-slate-100 h-0.5 rounded-full overflow-hidden">
+              <div class="${barBg} h-full" style="width: ${drop.pct}"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      if (col.isFinal) {
+        dropsHtml += `
+          <div class="mt-0.5 border border-dashed border-emerald-300 bg-emerald-50/40 rounded-lg py-1 text-center w-full shadow-3xs">
+            <span class="text-[8px] font-black text-emerald-700 uppercase block tracking-wider"><i class="fa-solid fa-crown text-[7px] mr-1"></i>Active Pool</span>
+          </div>
+        `;
+      }
+
+      const nodeClass = col.isFinal ? 'final-pipeline-card' : 'main-pipeline-card';
+
+      colDiv.innerHTML = `
+        <div id="${col.id}" class="${nodeClass} w-full py-1.5 px-2.5 rounded-lg text-center relative z-10 shrink-0 border border-black/5">
+          <div class="text-[8px] font-bold opacity-90 tracking-wider uppercase truncate text-slate-100" title="${col.name}">${col.name}</div>
+          <div class="text-[11px] font-black mt-0.2 text-white">${col.count}</div>
+          <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-white text-slate-700 border border-slate-200 text-[6.5px] font-black px-1 rounded-full shadow-3xs">
+            <span>${col.rate}</span>
+          </div>
+        </div>
+        <div class="w-full flex flex-col gap-1 mt-2.5 overflow-hidden">
+          ${dropsHtml}
+        </div>
+      `;
+      return colDiv;
+    }
+
+    function showIssueBubble(event, title, encodedDetails) {
+      event.stopPropagation();
+      const existingBubble = document.getElementById('active-issue-bubble');
+      if (existingBubble) existingBubble.remove();
+
+      const details = JSON.parse(decodeURIComponent(encodedDetails));
+      const bubble = document.createElement('div');
+      bubble.id = 'active-issue-bubble';
+      bubble.className = "absolute z-50 bg-slate-900 text-white p-3 rounded-xl shadow-xl border border-slate-700 text-left w-60 text-[10px] animate-fade-in";
+      
+      let issueListHtml = '';
+      if(details.length > 0) {
+        details.forEach(d => {
+          issueListHtml += `
+            <div class="py-1 border-b border-slate-800 last:border-0 flex items-start gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation text-orange-400 mt-0.5 shrink-0"></i>
+              <span class="text-slate-300 font-medium">${d}</span>
+            </div>`;
+        });
+      } else {
+        issueListHtml = `<p class="text-slate-400 italic">No complex bottleneck logs found.</p>`;
+      }
+
+      bubble.innerHTML = `
+        <div class="flex justify-between items-center mb-1.5 pb-1 border-b border-slate-800">
+          <span class="font-black text-orange-400 uppercase tracking-wider text-[8px]"><i class="fa-solid fa-bug"></i> Top Bottleneck Issues</span>
+          <button onclick="document.getElementById('active-issue-bubble').remove()" class="text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <h4 class="font-bold text-white mb-1 text-[11px]">${title}</h4>
+        <div class="flex flex-col">${issueListHtml}</div>
+        <div class="mt-1.5 pt-1.5 border-t border-slate-800 text-[8px] text-slate-500 flex justify-between">
+          <span>Source: System Remarks</span>
+          <span class="text-[#00529C] font-bold">Dark System Log</span>
+        </div>
+      `;
+
+      document.body.appendChild(bubble);
+      const bubbleWidth = bubble.offsetWidth;
+      let posX = event.clientX + 12, posY = event.clientY - 30;
+      if (posX + bubbleWidth > window.innerWidth) posX = event.clientX - bubbleWidth - 12;
+      bubble.style.left = posX + 'px'; bubble.style.top = posY + 'px';
+    }
+
+    document.addEventListener('click', () => { const b = document.getElementById('active-issue-bubble'); if (b) b.remove(); });
+
+    // BARU: Kalkulator Garis Konektor Khusus Alur 5 Horizontal + Sisa Bawah
+    function drawPremiumConnectors() {
+      const svg = document.getElementById('pipeline-svg');
+      if(!svg) return;
+      svg.innerHTML = '';
+      const pRect = svg.getBoundingClientRect();
+
+      const nodes = [];
+      for(let i=1; i<=7; i++) { const el = document.getElementById(`node-${i}`); if(el) nodes.push(el); }
+
+      for (let i = 0; i < nodes.length - 1; i++) {
+        const currentBox = nodes[i];
+        const nextBox = nodes[i+1];
+
+        const r1 = currentBox.getBoundingClientRect();
+        const r2 = nextBox.getBoundingClientRect();
+
+        let x1, y1, x2, y2, dAttribute;
+        const midCurrY = r1.top - pRect.top + (r1.height / 2);
+        const midNextY = r2.top - pRect.top + (r2.height / 2);
+
+        // TIKUNGAN UNIK: Dari Node 5 (Ujung Kanan Baris 1) Turun ke Node 6 (Awal Kiri Baris 2)
+        if (i === 4) {
+          x1 = r1.left - pRect.left + (r1.width / 2);
+          y1 = r1.bottom - pRect.top;
+          x2 = r2.left - pRect.left + (r2.width / 2);
+          y2 = r2.top - pRect.top;
+          const controlY = y1 + (y2 - y1) / 2;
+          dAttribute = `M ${x1} ${y1} C ${x1} ${controlY}, ${x2} ${controlY}, ${x2} ${y2}`;
+        }
+        // JALUR HORIZONTAL BIASA (1->2->3->4->5 dan 6->7)
+        else {
+          x1 = r1.right - pRect.left;
+          y1 = midCurrY;
+          x2 = r2.left - pRect.left;
+          y2 = midNextY;
+          const controlX = x1 + (x2 - x1) / 2;
+          dAttribute = `M ${x1} ${y1} C ${controlX} ${y1}, ${controlX} ${y2}, ${x2} ${y2}`;
+        }
+
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        
+        line.setAttribute("d", dAttribute);
+        line.setAttribute("stroke", "#cbd5e1");
+        line.setAttribute("stroke-width", "1.2");
+        line.setAttribute("fill", "none");
+        line.setAttribute("stroke-dasharray", "3 3");
+        group.appendChild(line);
+
+        const pathLength = line.getTotalLength ? line.getTotalLength() : 40;
+        const midPoint = line.getPointAtLength ? line.getPointAtLength(pathLength / 2) : {x: (x1+x2)/2, y: (y1+y2)/2};
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", midPoint.x); circle.setAttribute("cy", midPoint.y);
+        circle.setAttribute("r", "2"); circle.setAttribute("fill", "#00529C");
+        group.appendChild(circle);
+
+        svg.appendChild(group);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", initPipelineDashboard);
+    window.addEventListener('resize', drawPremiumConnectors);
+  </script>
 </body>
 </html>

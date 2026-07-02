@@ -86,10 +86,21 @@
 
     <div id="map"></div>
 
-    <div class="navbar">
-        <a href="index.html" class="nav-btn active">📈 PERFORMANCE SALES</a>
-        <a href="risk.html" class="nav-btn">⚠️ DPK & NPL RISK</a>
-    </div>
+<div class="navbar-container" style="position: absolute; top: 15px; left: 20px; display: flex; gap: 10px; z-index: 1000;">
+  
+  <a href="index.html" style="background: #00529C; color: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; border: 1px solid #00529C; display: flex; align-items: center; gap: 6px;">
+    📈 PERFORMANCE SALES
+  </a>
+
+  <a href="risk.html" style="background: white; color: #555; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; border: 1px solid #ddd; display: flex; align-items: center; gap: 6px;">
+    ⚠️ DPK & NPL RISK
+  </a>
+
+  <a href="dashboard_funnel.html" style="background: white; color: #555; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; font-size: 12px; border: 1px solid #ddd; display: flex; align-items: center; gap: 6px;">
+    ⏳ FUNNEL ANALYSIS
+  </a>
+
+</div>
 
     <button id="btn-reset" class="reset-btn" onclick="resetToNational()">🔄 NASIONAL</button>
 
