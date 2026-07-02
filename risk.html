@@ -90,12 +90,7 @@
             background: #fff5f5; padding: 12px; border-radius: 6px;
             border-left: 4px solid #e53e3e; text-align: left;
         }
-        .npl-bar-item { margin-bottom: 10px; }
-        .npl-bar-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
-        .npl-bar-name { font-size: 11px; font-weight: bold; color: #2c3e50; }
-        .npl-bar-val { font-size: 11px; font-weight: bold; color: #c0392b; white-space: nowrap; min-width: 70px; text-align: right; }
-        .npl-bar-track { background: #f1f3f5; border-radius: 4px; height: 10px; width: 100%; overflow: hidden; }
-        .npl-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+        .chart-container { position: relative; height: 180px; width: 100%; }
         .company-list-wrapper { max-height: 200px; overflow-y: auto; }
         .custom-risk-icon { background: none; border: none; }
         .pulse-marker { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box; }
@@ -172,7 +167,9 @@
         
         <div class="real-ui-box">
             <h4>[ Top 5 Cabang Outstanding NPL Tertinggi ]</h4>
-            <div id="npl-bar-list"></div>
+            <div class="chart-container">
+                <canvas id="riskChart"></canvas>
+            </div>
         </div>
 
         <div class="real-ui-box">
@@ -259,7 +256,7 @@
         document.getElementById('map').appendChild(legendDiv);
 
         var branchesLayer = L.layerGroup().addTo(map);
-        let rawRiskData = [];
+        let rawRiskData = [], barChartRisk = null;
 
         function formatRupiah(val) {
             if (!val) return "Rp 0";
@@ -533,30 +530,47 @@
         }
 
         function renderRiskBarChart(ukerStats) {
-            const colors = ['#c0392b', '#e67e22', '#f1c40f', '#34495e', '#7f8c8d'];
-            let sorted = Object.keys(ukerStats).map(name => ({ name, npl: ukerStats[name].os_npl }))
-                .sort((a, b) => b.npl - a.npl).slice(0, 5);
+            let sortedRiskUker = Object.keys(ukerStats).map(name => {
+                return { name: name, npl: ukerStats[name].os_npl };
+            }).sort((a, b) => b.npl - a.npl).slice(0, 5);
 
-            const maxNpl = sorted[0]?.npl || 1;
-            const container = document.getElementById('npl-bar-list');
-            container.innerHTML = '';
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            if (barChartRisk) barChartRisk.destroy();
 
-            sorted.forEach((item, i) => {
-                const pct = (item.npl / maxNpl * 100).toFixed(1);
-                const div = document.createElement('div');
-                div.className = 'npl-bar-item';
-                div.innerHTML = `
-                    <div class="npl-bar-header">
-                        <span class="npl-bar-name">${i + 1}. ${item.name}</span>
-                        <span class="npl-bar-val">${formatRupiah(item.npl)}</span>
-                    </div>
-                    <div class="npl-bar-track">
-                        <div class="npl-bar-fill" style="width:${pct}%; background:${colors[i]};"></div>
-                    </div>`;
-                container.appendChild(div);
+            const elegantColors = ['#c0392b', '#e67e22', '#f1c40f', '#34495e', '#7f8c8d'];
+
+            barChartRisk = new Chart(ctx, {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: sortedRiskUker.map(item => item.name.replace("CB ", "").replace("KK ", "")),
+                    datasets: [{
+                        data: sortedRiskUker.map(item => item.npl / 1e9), 
+                        backgroundColor: elegantColors,
+                        borderRadius: 4, 
+                        barThickness: 16 
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 45, left: 5 } },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'right', 
+                            color: '#333', 
+                            font: { weight: 'bold', size: 10, family: 'sans-serif' }, 
+                            formatter: (val) => val > 0 ? val.toFixed(1) + 'M' : '0M' 
+                        }
+                    },
+                    scales: {
+                        x: { display: false, grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold', family: 'sans-serif' }, color: '#2c3e50' } }
+                    }
+                }
             });
-
-            if (sorted.length === 0) container.innerHTML = '<div style="font-size:11px;color:#aaa;text-align:center;padding:10px 0;">Tidak ada data NPL</div>';
         }
 
         function renderBranchList(ukerStats, selectedUker) {
